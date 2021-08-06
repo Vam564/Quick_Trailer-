@@ -1,0 +1,26 @@
+@import url('https://fonts.googleapis.com/css2?family=Tourney:wght@300&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Righteous&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400&display=swap');
+
+body{
+  font-family: 'Poppins', sans-serif;
+  
+}
+.App {
+  text-align: center;
+}
+.footer-styles{
+  min-height: 100px;
+  position: relative;
+  right: 0;
+  bottom: 0;
+  padding: 5px 20px;
+  margin-top: 30px;
+  font-weight: 700;
+}
+.list_page_title{
+  font-family: 'Righteous', cursive;
+  text-transform:uppercase ;
+}
+
+
