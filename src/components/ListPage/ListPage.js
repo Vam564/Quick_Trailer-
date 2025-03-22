@@ -60,7 +60,7 @@ const ListPage = () => {
     const listPageState = useSelector((state) => state.ListPageReducer)
     const { upcomingMovieListData, currentPage, total_pages,emptyData, searchMovieData, searchFlag, searchValue } = listPageState
     const dispatch = useDispatch()
-    const [movieListFilter, setMovieListFilter] = React.useState('upcoming');
+    const [movieListFilter, setMovieListFilter] = React.useState('popular');
     //const [emptyData, setemptyData] = React.useState(emptyData)
 
     const handleChange = (event) => {
