@@ -9,8 +9,7 @@ import { setApiData, setIncrementPage, setDecrementPage, setSearchData, setEmpty
 import List from './List'
 import Header from '../Header/Header'
 import '../../App.css'
-import SpeechRecognitionGrasper from '../SpeechRecognitionGrasper/SpeechRecognitionGrasper';
-import GooglePayUPI from '../PaymentGateway/GooglePayUPI';
+// import GooglePayUPI from '../PaymentGateway/GooglePayUPI';
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -91,7 +90,7 @@ const ListPage = () => {
                 // handle error
                 console.log(error);
             })
-    }, [currentPage, searchFlag, movieListFilter])
+    }, [currentPage, searchFlag, movieListFilter, dispatch, searchValue])
 
     return (
         <div>

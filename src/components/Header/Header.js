@@ -109,15 +109,14 @@ const Header = () => {
     //speech recognition
     const {
         transcript,
-        listening,
-        resetTranscript,
-        browserSupportsSpeechRecognition
+        listening
     } = useSpeechRecognition();
 
 
     const classes = useStyles();
-    const dispatch = useDispatch()
-    const [searchText, setSearchText] = useState('')
+    const dispatch = useDispatch();
+    const [searchText, setSearchText] = useState('');
+    const [typingTimeout, setTypingTimeout] = useState(null);
 
     useEffect(() => {
         transcript &&
@@ -140,48 +139,76 @@ const Header = () => {
                 console.log(error);
             })
 
-    }, [transcript])
-
+    }, [transcript, dispatch]);
 
     const handleSearch = (e) => {
-        console.log(e.target.value)
-        if (e.target.value === '') {
-            dispatch(setSearchFlag())
-            setSearchText('')
+        const value = e.target.value;
+        setSearchText(value);
+    
+        if (typingTimeout) {
+            clearTimeout(typingTimeout); // Clear the previous timeout
         }
-        else {
-            dispatch(setSearchValue(e.target.value))
-            setSearchText(e.target.value)
-            axios.get(`https://api.themoviedb.org/3/search/movie?api_key=88428b2a9e9d271ea540df7c3fa4dac3&query=${e.target.value}`)
-                .then(function (response) {
-                    // handle success
-                    if (response.data.results.length === 0) {
-                        dispatch(setEmptyData())
-                    }
-                    else {
-                        dispatch(setSearchData(response.data))
-                    }
+    
+        setTypingTimeout(
+            setTimeout(() => {
+                if (value === '') {
+                    dispatch(setSearchFlag());
+                } else {
+                    dispatch(setSearchValue(value));
+                    axios.get(`https://api.themoviedb.org/3/search/movie?api_key=88428b2a9e9d271ea540df7c3fa4dac3&query=${value}`)
+                        .then((response) => {
+                            if (response.data.results.length === 0) {
+                                dispatch(setEmptyData());
+                            } else {
+                                dispatch(setSearchData(response.data));
+                            }
+                        })
+                        .catch((error) => {
+                            console.log(error);
+                        });
+                }
+            }, 500) // Wait for 500ms before triggering the API call
+        );
+    };
+    // const handleSearch = (e) => {
+    //     console.log(e.target.value)
+    //     if (e.target.value === '') {
+    //         dispatch(setSearchFlag())
+    //         setSearchText('')
+    //     }
+    //     else {
+    //         dispatch(setSearchValue(e.target.value))
+    //         setSearchText(e.target.value)
+    //         axios.get(`https://api.themoviedb.org/3/search/movie?api_key=88428b2a9e9d271ea540df7c3fa4dac3&query=${e.target.value}`)
+    //             .then(function (response) {
+    //                 // handle success
+    //                 if (response.data.results.length === 0) {
+    //                     dispatch(setEmptyData())
+    //                 }
+    //                 else {
+    //                     dispatch(setSearchData(response.data))
+    //                 }
 
-                })
-                .catch(function (error) {
-                    // handle error
-                    console.log(error);
-                })
-        }
-    }
+    //             })
+    //             .catch(function (error) {
+    //                 // handle error
+    //                 console.log(error);
+    //             })
+    //     }
+    // }
+
+
     const onRedirect = () => {
         dispatch(setSearchFlag())
         setSearchText('')
     }
 
-
     const handleMicOn = () => {
-        SpeechRecognition.startListening()
-        setInterval(() => {
-            SpeechRecognition.stopListening()
-            // resetTranscript()
+        SpeechRecognition.startListening();
+        setTimeout(() => {
+            SpeechRecognition.stopListening();
         }, 10000);
-    }
+    };
 
     return (
         <div className={classes.grow}>

@@ -103,7 +103,7 @@ const googlePayBaseConfiguration = {
       .catch(function (err) {
         console.error("Error determining readiness to use Google Pay: ", err);
       });
-  }, []);
+  }, [createAndAddButton, googlePayBaseConfiguration, googlePayClient]);
 
   return (
     <div className="App">
