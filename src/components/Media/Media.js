@@ -8,40 +8,42 @@ import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
 
 const useStyles = makeStyles((theme) => ({
-    root: {
-        position: 'relative',
-        paddingTop: '59.25%', /* 56.25% Player ratio: 100 / (1280 / 720) */
-        margin: '20px 0',
-    },
-    react_player: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        borderRadius: 10,
-    },
     no_video: {
-        padding: "50px",
+        padding: '50px',
         textAlign: 'center',
     },
     dialogPaper: {
-        height: '800px'
-    },
-    dialog_player: {
         overflow: 'hidden',
+        background: '#000',
+    },
+    player_wrapper: {
+        position: 'relative',
+        paddingTop: '56.25%',
+        width: '100%',
+        background: '#000',
+    },
+    player_inner: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        border: 'none',
     },
     dialog_title: {
-        background: 'rgb(0, 0, 0)',
-        color: '#ffffff'
+        background: '#000',
+        color: '#ffffff',
+        padding: '8px 16px',
     },
     closeButton: {
         position: 'absolute',
         right: theme.spacing(1),
-        top: theme.spacing(1),
-        color: theme.palette.grey[500],
+        top: theme.spacing(0.5),
+        color: theme.palette.grey[400],
     },
 }));
 
-const Media = ({ handleClickOpen, handleClose, open }) => {
+const Media = ({ handleClickOpen, handleClose, open, isMovie, movieId }) => {
 
     const classes = useStyles()
     const content = useSelector((state) => state.DetailPageReducer)
@@ -51,57 +53,47 @@ const Media = ({ handleClickOpen, handleClose, open }) => {
 
 
     return (
-        <div className={classes.media_content}>
-            <div>
-                <Dialog
-                    fullWidth={"true"}
-                    maxWidth={"md"}
-                    classes={{ paper: classes.dialogPaper }}
-                    open={open}
-                    onClose={handleClose}
-                    aria-labelledby="customized-dialog-title"
-                >
-                    <DialogTitle id="customized-dialog-title" onClose={handleClose} className={classes.dialog_title}>
-                        Play Trailer
-                        <IconButton aria-label="close" className={classes.closeButton} onClick={handleClose}>
-                            <CloseIcon />
-                        </IconButton>
-                    </DialogTitle>
-                    {
-                        movieTrailerData.length === 0 ? (
-                            <div className={classes.no_video}>
-                                <h3>Sorry, No Trailer Found</h3>
-                            </div>
-                        ) : (
-                            <ReactPlayer
-                                className={classes.dialog_player}
-                                url={`https://www.youtube.com/embed/${movieTrailerData[0].key}`}
-                                width='100%'
-                                height='100%'
-                                controls={true}
-                            />
-                        )
-                    }
-                    {/* {
-                movieTrailerData.length === 0 ? (
-                    <div className={classes.no_video}>
-                        <h3>Sorry, No Trailer Found</h3>
-                    </div>
-                ) : (
-                    <Grid container className={classes.root}>
-                        <ReactPlayer
-                            className={classes.react_player}
-                            url={`https://www.youtube.com/embed/${movieTrailerData[0].key}`}
-                            width='100%'
-                            height='600px'
-                            controls={true}
-                        />
-                    </Grid>
-                )
-            } */}
-                </Dialog>
-            </div>
-        </div >
+        <Dialog
+            fullWidth
+            maxWidth="md"
+            classes={{ paper: classes.dialogPaper }}
+            open={open}
+            onClose={handleClose}
+            aria-labelledby="media-dialog-title"
+        >
+            <DialogTitle id="media-dialog-title" className={classes.dialog_title}>
+                {isMovie ? 'Watch Movie' : 'Watch Trailer'}
+                <IconButton aria-label="close" className={classes.closeButton} onClick={handleClose}>
+                    <CloseIcon />
+                </IconButton>
+            </DialogTitle>
+
+            {isMovie ? (
+                <div className={classes.player_wrapper}>
+                    <iframe
+                        src={`https://ythd.org/embed/${movieId}`}
+                        className={classes.player_inner}
+                        allowFullScreen
+                        allow="autoplay; fullscreen"
+                        title="Watch Movie"
+                    />
+                </div>
+            ) : movieTrailerData.length === 0 ? (
+                <div className={classes.no_video}>
+                    <h3>Sorry, No Trailer Found</h3>
+                </div>
+            ) : (
+                <div className={classes.player_wrapper}>
+                    <ReactPlayer
+                        className={classes.player_inner}
+                        url={`https://www.youtube.com/watch?v=${movieTrailerData[0].key}`}
+                        width="100%"
+                        height="100%"
+                        controls
+                    />
+                </div>
+            )}
+        </Dialog>
     )
 }
 

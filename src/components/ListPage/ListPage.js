@@ -68,8 +68,8 @@ const ListPage = () => {
 
     useEffect(() => {
       //  setemptyData(false)
-        let url = searchFlag ? (`https://api.themoviedb.org/3/search/movie?api_key=88428b2a9e9d271ea540df7c3fa4dac3&query=${searchValue}&page=${currentPage}`)
-            : (`https://api.themoviedb.org/3/movie/${movieListFilter}?api_key=88428b2a9e9d271ea540df7c3fa4dac3&page=${currentPage}`)
+        let url = searchFlag ? (`https://api.themoviedb.org/3/search/movie?api_key=88428b2a9e9d271ea540df7c3fa4dac3&append_to_response=external_ids&query=${searchValue}&page=${currentPage}`)
+            : (`https://api.themoviedb.org/3/movie/${movieListFilter}?api_key=88428b2a9e9d271ea540df7c3fa4dac3&append_to_response=external_ids&page=${currentPage}`)
 
         axios.get(url)
             .then(function (response) {
@@ -79,12 +79,6 @@ const ListPage = () => {
                         (dispatch(setEmptyData()))
                         : (searchFlag ? dispatch(setSearchData(response.data)) : dispatch(setApiData(response.data)))) :
                     (dispatch(setEmptyData()))
-                // if(response.data?.results){
-                //     searchFlag ? dispatch(setSearchData(response.data)) : dispatch(setApiData(response.data))
-                // }
-                // else{
-                //     setemptyData(true)
-                // }
             })
             .catch(function (error) {
                 // handle error
