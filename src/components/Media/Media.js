@@ -8,8 +8,8 @@ import IconButton from '@material-ui/core/IconButton';
 import CloseIcon from '@material-ui/icons/Close';
 
 const MOVIE_SERVERS = [
-    { label: 'Server 1', url: (id) => `https://ythd.org/embed/${id}` },
-    { label: 'Server 2', url: (id) => `https://vidlink.pro/movie/${id}` },
+    { label: 'Server 1', url: (id) => `https://vidlink.pro/movie/${id}` },
+    { label: 'Server 2', url: (id) => `https://ythd.org/embed/${id}` },
 ]
 
 const useStyles = makeStyles((theme) => ({
