@@ -157,6 +157,8 @@ const useStyles = makeStyles((theme) => ({
     },
 }))
 
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+
 const Sports = () => {
     const classes = useStyles()
     const [selectedChannel, setSelectedChannel] = useState(null)
@@ -216,7 +218,13 @@ const Sports = () => {
                             height="100%"
                             playing
                             controls
-                            config={{ file: { forceHLS: true } }}
+                            playsinline
+                            config={{
+                                file: {
+                                    forceHLS: !isIOS,
+                                    attributes: { playsInline: true },
+                                }
+                            }}
                         />
                     </div>
                 )}
