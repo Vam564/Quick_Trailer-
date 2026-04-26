@@ -111,12 +111,8 @@ const ListPage = () => {
                             className={classes.selectEmpty}
                             autoWidth
                         >
-                            <MenuItem value="">
-                                <em>None</em>
-                            </MenuItem>
-                            <MenuItem value={'latest'}>Latest</MenuItem>
-                            <MenuItem value={'now_playing'}>Now Playing</MenuItem>
                             <MenuItem value={'popular'}>Popular</MenuItem>
+                            <MenuItem value={'now_playing'}>Now Playing</MenuItem>
                             <MenuItem value={'top_rated'}>Top Rated</MenuItem>
                             <MenuItem value={'upcoming'}>Upcoming</MenuItem>
                         </Select>
