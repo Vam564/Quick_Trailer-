@@ -92,9 +92,9 @@ const CATEGORIES = [
 const useStyles = makeStyles((theme) => ({
     page: {
         minHeight: '100vh',
-        background: '#0f0f0f',
+        background: '#f5f5f5',
         paddingBottom: 120,
-        color: '#fff',
+        color: '#333',
     },
     top_bar: {
         display: 'flex',
@@ -104,7 +104,7 @@ const useStyles = makeStyles((theme) => ({
         padding: '16px 24px 8px',
     },
     page_title: {
-        color: '#fff',
+        color: '#4d4d4d',
         fontFamily: "'Righteous', cursive",
         textTransform: 'uppercase',
         margin: 0,
@@ -125,11 +125,11 @@ const useStyles = makeStyles((theme) => ({
         transition: 'all 0.2s',
     },
     source_active: { background: '#1DB954', color: '#fff' },
-    source_inactive: { background: '#282828', color: '#aaa' },
+    source_inactive: { background: '#e0e0e0', color: '#555' },
     search_bar: {
         display: 'flex',
         alignItems: 'center',
-        background: '#282828',
+        background: '#ebebeb',
         borderRadius: 24,
         padding: '6px 16px',
         gap: 8,
@@ -137,11 +137,11 @@ const useStyles = makeStyles((theme) => ({
         maxWidth: 480,
     },
     search_input: {
-        color: '#fff',
+        color: '#333',
         flex: 1,
         fontSize: 14,
     },
-    search_icon_color: { color: '#aaa', fontSize: 18 },
+    search_icon_color: { color: '#999', fontSize: 18 },
     categories_row: {
         display: 'flex',
         overflowX: 'auto',
@@ -151,8 +151,8 @@ const useStyles = makeStyles((theme) => ({
         '&::-webkit-scrollbar': { display: 'none' },
     },
     chip: {
-        background: '#282828',
-        color: '#ccc',
+        background: '#e0e0e0',
+        color: '#555',
         fontWeight: 600,
         cursor: 'pointer',
         flexShrink: 0,
@@ -168,25 +168,25 @@ const useStyles = makeStyles((theme) => ({
         padding: '0 24px 12px',
     },
     section_title: {
-        color: '#fff',
+        color: '#4d4d4d',
         fontSize: 16,
         fontWeight: 'bold',
         margin: 0,
     },
     song_count: {
-        color: '#aaa',
+        color: '#999',
         fontSize: 12,
     },
     grid_wrapper: { padding: '0 12px 20px' },
     card: {
         width: 170,
-        background: '#181818',
+        background: '#fff',
         borderRadius: 8,
         margin: 10,
-        transition: 'transform 0.2s ease, background 0.2s ease',
-        '&:hover': { transform: 'translateY(-4px)', background: '#282828' },
+        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+        '&:hover': { transform: 'translateY(-4px)', boxShadow: '0 8px 24px rgba(0,0,0,0.12)' },
     },
-    card_active: { outline: '2px solid #1DB954', background: '#1a2e1f !important' },
+    card_active: { outline: '2px solid #1DB954', background: '#f0faf4 !important' },
     card_img: { height: 170, objectFit: 'cover', background: '#333' },
     card_img_placeholder: {
         height: 170,
@@ -217,7 +217,7 @@ const useStyles = makeStyles((theme) => ({
     song_title: {
         fontSize: 12,
         fontWeight: 'bold',
-        color: '#fff',
+        color: '#333',
         margin: '0 0 4px',
         whiteSpace: 'nowrap',
         overflow: 'hidden',
@@ -225,7 +225,7 @@ const useStyles = makeStyles((theme) => ({
     },
     song_artist: {
         fontSize: 11,
-        color: '#aaa',
+        color: '#9b9b9b',
         margin: 0,
         whiteSpace: 'nowrap',
         overflow: 'hidden',
@@ -237,7 +237,7 @@ const useStyles = makeStyles((theme) => ({
         alignItems: 'center',
         justifyContent: 'center',
         padding: 60,
-        color: '#aaa',
+        color: '#9b9b9b',
     },
     loading_center: { display: 'flex', justifyContent: 'center', padding: 60 },
     load_more_row: {
@@ -246,21 +246,21 @@ const useStyles = makeStyles((theme) => ({
         padding: '8px 0 24px',
     },
     load_more_btn: {
-        background: '#282828',
-        color: '#fff',
+        background: '#e0e0e0',
+        color: '#444',
         borderRadius: 24,
         padding: '8px 32px',
         textTransform: 'none',
         fontWeight: 'bold',
-        '&:hover': { background: '#383838' },
-        '&:disabled': { color: '#555' },
+        '&:hover': { background: '#d0d0d0' },
+        '&:disabled': { color: '#aaa' },
     },
     // ---- Bottom player ----
     player_bar: {
         position: 'fixed',
         bottom: 0, left: 0, right: 0,
-        background: '#181818',
-        borderTop: '1px solid #282828',
+        background: '#fff',
+        borderTop: '1px solid #e0e0e0',
         display: 'flex',
         alignItems: 'center',
         padding: '10px 20px',
@@ -279,11 +279,11 @@ const useStyles = makeStyles((theme) => ({
     },
     player_info: { minWidth: 0, flex: '0 0 150px' },
     player_title: {
-        fontSize: 13, fontWeight: 'bold', color: '#fff', margin: 0,
+        fontSize: 13, fontWeight: 'bold', color: '#222', margin: 0,
         whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
     },
     player_artist: {
-        fontSize: 11, color: '#aaa', margin: 0,
+        fontSize: 11, color: '#777', margin: 0,
         whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
     },
     player_controls: { display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 },
@@ -291,12 +291,12 @@ const useStyles = makeStyles((theme) => ({
         background: '#1DB954', color: '#fff', padding: 6,
         '&:hover': { background: '#17a349' },
     },
-    icon_btn: { color: '#aaa', '&:hover': { color: '#fff' } },
+    icon_btn: { color: '#9b9b9b', '&:hover': { color: '#333' } },
     icon_active: { color: '#1DB954 !important' },
     player_progress: {
         flex: 1, minWidth: 80, display: 'flex', alignItems: 'center', gap: 8,
     },
-    time_label: { fontSize: 11, color: '#aaa', flexShrink: 0, minWidth: 36 },
+    time_label: { fontSize: 11, color: '#999', flexShrink: 0, minWidth: 36 },
     volume_section: {
         display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, width: 120,
         [theme.breakpoints.down('sm')]: { display: 'none' },
@@ -305,7 +305,7 @@ const useStyles = makeStyles((theme) => ({
         fontSize: 12, color: '#1DB954', padding: '0 10px',
         display: 'flex', alignItems: 'center', gap: 6,
     },
-    dl_btn: { color: '#aaa', flexShrink: 0, '&:hover': { color: '#1DB954' } },
+    dl_btn: { color: '#9b9b9b', flexShrink: 0, '&:hover': { color: '#1DB954' } },
 }))
 
 const fmt = (secs) => {
