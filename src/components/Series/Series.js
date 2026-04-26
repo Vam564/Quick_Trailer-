@@ -16,6 +16,11 @@ import default_img from '../../assets/default_img.png'
 
 const API_KEY = '88428b2a9e9d271ea540df7c3fa4dac3'
 
+const SERIES_SERVERS = [
+    { label: 'Server 1', url: (id, s, e) => `https://vidsrc.to/embed/tv/${id}/${s}/${e}` },
+    { label: 'Server 2', url: (id, s, e) => `https://vidlink.pro/tv/${id}/${s}/${e}` },
+]
+
 const FILTERS = [
     { label: 'Popular',      value: 'popular' },
     { label: 'Top Rated',    value: 'top_rated' },
@@ -189,6 +194,7 @@ const Series = () => {
     const [season, setSeason] = useState(1)
     const [episode, setEpisode] = useState(1)
     const [playerOpen, setPlayerOpen] = useState(false)
+    const [serverIndex, setServerIndex] = useState(0)
 
     useEffect(() => {
         if (seriesSearchFlag) return
@@ -216,7 +222,7 @@ const Series = () => {
     }
 
     const streamUrl = selected
-        ? `https://vidsrc.to/embed/tv/${selected.id}/${season}/${episode}`
+        ? SERIES_SERVERS[serverIndex].url(selected.id, season, episode)
         : ''
 
     return (
@@ -366,11 +372,32 @@ const Series = () => {
                         <Typography className={classes.dialog_title}>
                             {selected?.name} — S{season} E{episode}
                         </Typography>
+                        <div style={{ display: 'flex', gap: 6, marginLeft: 'auto' }}>
+                            {SERIES_SERVERS.map((s, i) => (
+                                <button
+                                    key={s.label}
+                                    onClick={() => setServerIndex(i)}
+                                    style={{
+                                        padding: '4px 12px',
+                                        borderRadius: 14,
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        fontSize: 12,
+                                        fontWeight: 'bold',
+                                        background: i === serverIndex ? '#e50914' : '#444',
+                                        color: '#fff',
+                                    }}
+                                >
+                                    {s.label}
+                                </button>
+                            ))}
+                        </div>
                     </Toolbar>
                 </AppBar>
                 <div className={classes.player_wrapper}>
                     {playerOpen && (
                         <iframe
+                            key={serverIndex}
                             src={streamUrl}
                             className={classes.player_iframe}
                             allowFullScreen
