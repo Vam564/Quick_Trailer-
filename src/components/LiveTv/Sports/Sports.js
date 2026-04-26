@@ -48,22 +48,27 @@ const useStyles = makeStyles((theme) => ({
         textTransform: 'uppercase',
     },
     grid_wrapper: {
-        padding: '20px 30px 40px',
+        padding: '20px 16px 40px',
         justifyContent: 'center',
+        [theme.breakpoints.up('sm')]: {
+            padding: '20px 24px 40px',
+        },
+    },
+    grid_item: {
+        padding: '8px 8px',
+        width: '100%',
+        [theme.breakpoints.up('sm')]: {
+            padding: '10px 12px',
+        },
     },
     card: {
         width: '100%',
-        maxWidth: 380,
         borderRadius: 12,
-        margin: 16,
         overflow: 'hidden',
         transition: 'transform 0.2s ease, box-shadow 0.2s ease',
         '&:hover': {
             transform: 'translateY(-6px)',
             boxShadow: '0 16px 40px rgba(0,0,0,0.22)',
-        },
-        [theme.breakpoints.up('md')]: {
-            maxWidth: 340,
         },
     },
     card_action: {
@@ -163,7 +168,7 @@ const Sports = () => {
 
             <Grid container className={classes.grid_wrapper}>
                 {CHANNELS.map((channel) => (
-                    <Grid item key={channel.id} xs={12} sm={6} md={4}>
+                    <Grid item key={channel.id} xs={12} sm={6} md={4} className={classes.grid_item}>
                         <Card className={classes.card} onClick={() => setSelectedChannel(channel)}>
                             <CardActionArea className={classes.card_action}>
                                 <div className={classes.card_banner}>
