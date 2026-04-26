@@ -48,3 +48,17 @@ export const setEmptyData= (payload) =>{
     return ({type:NO_DATA_FROM_API, payload})
 }
 
+export const SERIES_SEARCH_DATA = "SERIES_SEARCH_DATA"
+export const SERIES_SEARCH_FLAG = "SERIES_SEARCH_FLAG"
+
+export const setSeriesSearchData = (payload) => ({ type: SERIES_SEARCH_DATA, payload })
+export const clearSeriesSearch = () => ({ type: SERIES_SEARCH_FLAG })
+
+export const MUSIC_SEARCH_DATA  = "MUSIC_SEARCH_DATA"
+export const MUSIC_SEARCH_FLAG  = "MUSIC_SEARCH_FLAG"
+export const MUSIC_SOURCE       = "MUSIC_SOURCE"
+
+export const setMusicSearchData = (payload) => ({ type: MUSIC_SEARCH_DATA, payload })
+export const clearMusicSearch   = ()         => ({ type: MUSIC_SEARCH_FLAG })
+export const setMusicSource     = (payload)  => ({ type: MUSIC_SOURCE, payload })
+

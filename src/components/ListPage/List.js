@@ -53,7 +53,7 @@ const useStyles = makeStyles({
   content_img:{
     height:"100%",
     minHeight:'300px'
-  }
+  },
 
 });
 
@@ -91,7 +91,6 @@ const List = ({ data }) => {
             <Typography variant="body2" color="textSecondary" component="p" className={classes.description}>
               {data.overview}
             </Typography>
-            <span className={classes.lines_text}>(2 lines)</span>
           </div>
         </CardContent>
       </CardActionArea>

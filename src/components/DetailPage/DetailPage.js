@@ -7,6 +7,7 @@ import Header from '../Header/Header'
 import { setMovieTrailerData } from '../../store/actions/DetailPageActionTypes'
 import Media from '../Media/Media'
 import PlayArrowIcon from '@material-ui/icons/PlayArrow';
+import GetAppIcon from '@material-ui/icons/GetApp';
 import default_img from '../../assets/default_img.png'
 
 const useStyles = makeStyles((theme) => ({
@@ -189,6 +190,10 @@ const DetailPage = () => {
                                 </Fab>
                                 <Fab variant="extended" size="medium" className={classes.btns} onClick={handleWatchMovie}>
                                     <PlayArrowIcon />&nbsp;Play Movie
+                                </Fab>
+                                <Fab variant="extended" size="medium" className={classes.btns}
+                                    onClick={() => window.open(`https://vidvault.ru/movie/${detailPageData.id}`, '_blank')}>
+                                    <GetAppIcon />&nbsp;Download
                                 </Fab>
                             </div>
                         </Grid>
