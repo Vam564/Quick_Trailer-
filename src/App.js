@@ -7,6 +7,7 @@ import Games from './components/Games/Games';
 import Sports from './components/LiveTv/Sports/Sports';
 import Series from './components/Series/Series';
 import Music from './components/Music/Music';
+import MoviePlayer from './components/MoviePlayer/MoviePlayer';
 
 const App = () => {
 
@@ -19,7 +20,8 @@ const App = () => {
           <Route path="/games"   component={Games} />
           <Route path="/sports"  component={Sports} />
           <Route path="/series"  component={Series} />
-          <Route path="/music"   component={Music} />
+          <Route path="/music"       component={Music} />
+          <Route path="/movieplayer" component={MoviePlayer} />
         </Router>
       </div>
       <Footer></Footer>

@@ -107,7 +107,6 @@ const DetailPage = () => {
     const history = useHistory()
     const dispatch = useDispatch()
     const [watchTrailer, setWatchTrailer] = useState(false)
-    const [isMovie, setIsMovie] = useState(false)
     const [open, setOpen] = useState(false)
     const classes = useStyles()
 
@@ -125,7 +124,6 @@ const DetailPage = () => {
         axios.get(url)
             .then((response) => {
                 dispatch(setMovieTrailerData(response.data))
-                setIsMovie(false)
                 setWatchTrailer(true)
                 handleClickOpen()
             })
@@ -133,9 +131,7 @@ const DetailPage = () => {
     }
 
     const handleWatchMovie = () => {
-        setIsMovie(true)
-        setWatchTrailer(true)
-        handleClickOpen()
+        history.push('/movieplayer')
     }
 
     const releaseYear = detailPageData.release_date?.split('-')[0]
@@ -207,7 +203,7 @@ const DetailPage = () => {
                     handleClose={handleClose}
                     open={open}
                     setOpen={setOpen}
-                    isMovie={isMovie}
+                    isMovie={false}
                     movieId={detailPageData.id}
                 />
             )}
