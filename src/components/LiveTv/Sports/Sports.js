@@ -29,7 +29,7 @@ const CHANNELS = [
         id: 3,
         name: 'Sky Sports',
         description: 'Ad-free live sports streaming — cricket, football & more.',
-        url: 'https://plu001.myturn1.top:8088/live/webcricn04/playlist.m3u8?vidictid=20564757365&id=114607&pk=dbf564881d4a7e41eb02f5766fa3a03262932a2eba36779e5d9599bc8653f16e7a85dc4ba8b9bc1c57762bf2a1fa08ac557450d18183ab5895a27aa8b86a7f20',
+        url: 'https://muc002.myturn1.top:8088/live/webcricn02/playlist.m3u8?id=115656&pk=dbf564881d4a7e41eb02f5766fa3a03262932a2eba36779e5d9599bc8653f16e88aa75085d8dcdd3398efb6598e1dacc4d5c689d9ca5e384cd6d1057967f6298',
         logo: 'https://assets.goal.com/images/v3/blt46f04697e50c5900/sky%20sports%20logo%20image.png?auto=webp&format=pjpg&width=3840&quality=60',
         gradient: 'linear-gradient(135deg, #003c7a 0%, #0057b8 100%)',
         accent: '#0057B8',
