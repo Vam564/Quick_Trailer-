@@ -5,6 +5,9 @@ import ListPage from './components/ListPage/ListPage';
 import Footer from './components/Footer/Footer';
 import Games from './components/Games/Games';
 import Sports from './components/LiveTv/Sports/Sports';
+import Regional from './components/LiveTv/Regional/Regional';
+import News from './components/LiveTv/News/News';
+import LiveMusic from './components/LiveTv/Music/Music';
 import Series from './components/Series/Series';
 import Music from './components/Music/Music';
 import MoviePlayer from './components/MoviePlayer/MoviePlayer';
@@ -18,8 +21,11 @@ const App = () => {
           <Route path="/" exact component={ListPage} />
           <Route path="/detailpage"   component={DetailPage} />
           <Route path="/games"   component={Games} />
-          <Route path="/sports"  component={Sports} />
-          <Route path="/series"  component={Series} />
+          <Route path="/sports"   component={Sports} />
+          <Route path="/regional" component={Regional} />
+          <Route path="/news"       component={News} />
+          <Route path="/livetv-music" component={LiveMusic} />
+          <Route path="/series"   component={Series} />
           <Route path="/music"       component={Music} />
           <Route path="/movieplayer" component={MoviePlayer} />
         </Router>

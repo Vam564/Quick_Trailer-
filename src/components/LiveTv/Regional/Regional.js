@@ -9,66 +9,57 @@ import Header from '../../Header/Header'
 const CHANNELS = [
     {
         id: 1,
-        name: 'Star Sports 1 HD',
-        description: 'Live cricket, football & more in HD quality.',
-        url: 'https://mut001.myturn1.top:8088/live/starsports01/playlist.m3u8?vidictid=205685854492&id=123144&pk=dbf564881d4a7e41eb02f5766fa3a03262932a2eba36779e5d9599bc8653f16e50d322d67e48aaa4b5f33adbd3144117469ea9a216cf0a7fde969aae5571aad7',
-        logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Star_Sports_1_HD.png/960px-Star_Sports_1_HD.png?_=20221025095646',
-        gradient: 'linear-gradient(135deg, #0d1b6e 0%, #1a3a8f 100%)',
-        accent: '#1565C0',
+        name: 'Zee Telugu',
+        description: 'Popular Telugu entertainment with serials, movies & reality shows.',
+        url: 'https://www.mhdtvhub.com/ww/zee/play.php?id=Zee%20Telugu%20HD',
+        logo: 'https://logos-world.net/wp-content/uploads/2023/04/Zee-Telugu-Logo.jpg',
+        gradient: 'linear-gradient(135deg, #1a237e 0%, #3949ab 100%)',
+        accent: '#3949AB',
     },
     {
         id: 2,
-        name: 'Willow TV',
-        description: 'Premium cricket coverage from around the world.',
-        url: 'https://plu001.myturn1.top:8088/live/webcricwillow/playlist.m3u8?vidictid=20568121379&id=120375&pk=dbf564881d4a7e41eb02f5766fa3a03262932a2eba36779e5d9599bc8653f16e50d322d67e48aaa4b5f33adbd3144117469ea9a216cf0a7fde969aae5571aad7',
-        logo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQbWZIxXUmihcWrgCCVhd-McRNUqiofRyOdig&s',
-        gradient: 'linear-gradient(135deg, #1a5c1a 0%, #2e7d32 100%)',
-        accent: '#2E7D32',
-    },
-    {
-        id: 3,
-        name: 'Sky Sports',
-        description: 'Ad-free live sports streaming — cricket, football & more.',
-        url: 'https://muc002.myturn1.top:8088/live/webcricn02/playlist.m3u8?id=115656&pk=dbf564881d4a7e41eb02f5766fa3a03262932a2eba36779e5d9599bc8653f16e88aa75085d8dcdd3398efb6598e1dacc4d5c689d9ca5e384cd6d1057967f6298',
-        logo: 'https://assets.goal.com/images/v3/blt46f04697e50c5900/sky%20sports%20logo%20image.png?auto=webp&format=pjpg&width=3840&quality=60',
-        gradient: 'linear-gradient(135deg, #003c7a 0%, #0057b8 100%)',
-        accent: '#0057B8',
-    },
-    {
-        id: 4,
-        name: 'Star Sports English',
-        description: 'Live sports in English — cricket, football, kabaddi & more.',
-        url: 'https://mhdtvhub.com/emb/1.html',
-        logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Star_Sports_1_HD.png/960px-Star_Sports_1_HD.png',
-        gradient: 'linear-gradient(135deg, #0d1b6e 0%, #1a3a8f 100%)',
-        accent: '#1565C0',
-    },
-    {
-        id: 5,
-        name: 'Star Sports Hindi',
-        description: 'Live sports commentary & coverage in Hindi.',
-        url: 'https://alymize.com/in/index.php?watch=009',
-        logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Star_Sports_1_HD.png/960px-Star_Sports_1_HD.png',
+        name: 'Gemini TV',
+        description: 'Leading Telugu general entertainment channel.',
+        url: 'https://mhdtvhub.com/ww/sun/play.php?id=194392',
+        logo: 'https://upload.wikimedia.org/wikipedia/commons/9/9e/Sun_Gemini.jpg',
         gradient: 'linear-gradient(135deg, #b71c1c 0%, #e53935 100%)',
         accent: '#E53935',
     },
     {
-        id: 6,
-        name: 'Star Sports Telugu',
-        description: 'Live sports with Telugu commentary — cricket & more.',
-        url: 'https://alymize.com/in/index.php?watch=011',
-        logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Star_Sports_1_HD.png/960px-Star_Sports_1_HD.png',
+        id: 3,
+        name: 'Gemini Life',
+        description: 'Top Telugu dramas, reality shows and blockbuster movies.',
+        url: 'https://mhdtvhub.com/ww/sun/play.php?id=194337',
+        logo: 'https://i.imgur.com/Oe0GXf6.jpg',
         gradient: 'linear-gradient(135deg, #e65100 0%, #ff6d00 100%)',
         accent: '#FF6D00',
     },
     {
-        id: 7,
-        name: 'Star Sports Tamil',
-        description: 'Live sports with Tamil commentary — cricket & kabaddi.',
-        url: 'https://alymize.com/in/index.php?watch=012',
-        logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Star_Sports_1_HD.png/960px-Star_Sports_1_HD.png',
+        id: 4,
+        name: 'Gemini Comedy',
+        description: 'Blockbuster Telugu & Hindi movies around the clock.',
+        url: 'https://mhdtvhub.com/ww/sun/play.php?id=194394',
+        logo: 'https://jiotvimages.cdn.jio.com/dare_images/images/channel/8ecf1c7a14a5f543ca60013e8d048aaf.png',
         gradient: 'linear-gradient(135deg, #1b5e20 0%, #388e3c 100%)',
         accent: '#388E3C',
+    },
+    {
+        id: 5,
+        name: 'Telugu One',
+        description: '24/7 Telugu movie channel with latest and classic hits.',
+        url: 'https://mhdtvhub.com/ww/tal/play.php?id=d9791233af2ae980dd22ae865af8b3dd',
+        logo: 'https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/47/32/da/4732da54-8efa-5cc9-c517-1d71669763eb/AppIcon-0-0-1x_U007emarketing-0-8-0-85-220.png/1200x630wa.jpg',
+        gradient: 'linear-gradient(135deg, #4a148c 0%, #7b1fa2 100%)',
+        accent: '#7B1FA2',
+    },
+    {
+        id: 6,
+        name: 'Gemini Movies',
+        description: '24/7 Telugu movie channel with latest and classic hits.',
+        url: 'https://mhdtvhub.com/ww/sun/play.php?id=194384',
+        logo: 'https://sund-images.sunnxt.com/194384/1000x1500_SunGeminiMovies_194384_a897e4e5-6910-48d2-b387-23cab02025b9.jpg',
+        gradient: 'linear-gradient(135deg, #4a148c 0%, #7b1fa2 100%)',
+        accent: '#7B1FA2',
     },
 ]
 
@@ -114,12 +105,17 @@ const useStyles = makeStyles((theme) => ({
         height: 200,
         position: 'relative',
         overflow: 'hidden',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
     },
     channel_logo: {
         width: '100%',
         height: '100%',
-        objectFit: 'cover',
+        objectFit: 'contain',
+        padding: 16,
         display: 'block',
+        background: '#fff',
     },
     live_badge: {
         position: 'absolute',
@@ -191,25 +187,33 @@ const useStyles = makeStyles((theme) => ({
         alignItems: 'center',
         justifyContent: 'center',
     },
+    no_stream: {
+        color: '#fff',
+        textAlign: 'center',
+        padding: 40,
+    },
 }))
 
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
 
-const Sports = () => {
+const Regional = () => {
     const classes = useStyles()
     const [selectedChannel, setSelectedChannel] = useState(null)
 
     return (
         <div className={classes.page}>
             <Header />
-            <h1 className={`${classes.page_title} list_page_title`}>Live Sports TV</h1>
+            <h1 className={`${classes.page_title} list_page_title`}>Regional Live TV</h1>
 
             <Grid container className={classes.grid_wrapper}>
                 {CHANNELS.map((channel) => (
                     <Grid item key={channel.id} xs={12} sm={6} md={4} className={classes.grid_item}>
                         <Card className={classes.card} onClick={() => setSelectedChannel(channel)}>
                             <CardActionArea className={classes.card_action}>
-                                <div className={classes.card_banner}>
+                                <div
+                                    className={classes.card_banner}
+                                    style={{ background: channel.gradient }}
+                                >
                                     <img
                                         src={channel.logo}
                                         alt={channel.name}
@@ -248,7 +252,7 @@ const Sports = () => {
                 </AppBar>
                 {selectedChannel && (
                     <div className={classes.player_wrapper}>
-                        {selectedChannel.url.includes('.m3u8') ? (
+                        {selectedChannel.url && selectedChannel.url.includes('.m3u8') ? (
                             <ReactPlayer
                                 url={selectedChannel.url}
                                 width="100%"
@@ -263,7 +267,7 @@ const Sports = () => {
                                     }
                                 }}
                             />
-                        ) : (
+                        ) : selectedChannel.url ? (
                             <iframe
                                 src={selectedChannel.url}
                                 width="100%"
@@ -273,6 +277,13 @@ const Sports = () => {
                                 title={selectedChannel.name}
                                 style={{ border: 'none' }}
                             />
+                        ) : (
+                            <div className={classes.no_stream}>
+                                <Typography variant="h6">Stream coming soon</Typography>
+                                <Typography variant="body2" style={{ color: '#aaa', marginTop: 8 }}>
+                                    Add the stream URL for {selectedChannel.name} in Regional.js
+                                </Typography>
+                            </div>
                         )}
                     </div>
                 )}
@@ -281,4 +292,4 @@ const Sports = () => {
     )
 }
 
-export default Sports
+export default Regional

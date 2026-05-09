@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { makeStyles, Avatar, AppBar, Toolbar, InputBase, Typography, Drawer, List, ListItem, ListItemIcon, ListItemText, Divider } from '@material-ui/core';
+import { makeStyles, Avatar, AppBar, Toolbar, InputBase, Typography, Drawer, List, ListItem, ListItemIcon, ListItemText, Divider, ListSubheader } from '@material-ui/core';
 import IconButton from '@material-ui/core/IconButton';
 import SearchIcon from '@material-ui/icons/Search';
 import MenuIcon from '@material-ui/icons/Menu';
@@ -8,6 +8,8 @@ import TvIcon from '@material-ui/icons/Tv';
 import MusicNoteIcon from '@material-ui/icons/MusicNote';
 import SportsIcon from '@material-ui/icons/Sports';
 import SportsEsportsIcon from '@material-ui/icons/SportsEsports';
+import LanguageIcon from '@material-ui/icons/Language';
+import AnnouncementIcon from '@material-ui/icons/Announcement';
 import CloseIcon from '@material-ui/icons/Close';
 import { Link, useHistory } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
@@ -21,8 +23,14 @@ const NAV_ITEMS = [
     { label: 'Movies',  path: '/',       icon: <MovieIcon /> },
     { label: 'Series',  path: '/series', icon: <TvIcon /> },
     { label: 'Music',   path: '/music',  icon: <MusicNoteIcon /> },
-    { label: 'Sports',  path: '/sports', icon: <SportsIcon /> },
     { label: 'Games',   path: '/games',  icon: <SportsEsportsIcon /> },
+]
+
+const LIVE_TV_ITEMS = [
+    { label: 'Sports',   path: '/sports',      icon: <SportsIcon /> },
+    { label: 'Regional', path: '/regional',    icon: <LanguageIcon /> },
+    { label: 'News',     path: '/news',        icon: <AnnouncementIcon /> },
+    { label: 'Music',    path: '/livetv-music', icon: <MusicNoteIcon /> },
 ]
 
 const useStyles = makeStyles((theme) => ({
@@ -131,6 +139,16 @@ const useStyles = makeStyles((theme) => ({
     nav_text: {
         color: '#333333',
         fontSize: 15,
+    },
+    section_header: {
+        fontSize: 11,
+        fontWeight: 'bold',
+        color: '#e50914',
+        letterSpacing: 1.5,
+        textTransform: 'uppercase',
+        lineHeight: '36px',
+        paddingLeft: 20,
+        background: '#fff',
     },
 }));
 
@@ -263,6 +281,29 @@ const Header = () => {
                 <Divider />
                 <List disablePadding>
                     {NAV_ITEMS.map((item) => {
+                        const isActive = currentPath === item.path
+                        return (
+                            <ListItem
+                                button
+                                key={item.label}
+                                className={`${classes.nav_item} ${isActive ? classes.nav_item_active : ''}`}
+                                onClick={() => handleNavClick(item.path)}
+                            >
+                                <ListItemIcon className={classes.nav_icon}>
+                                    {item.icon}
+                                </ListItemIcon>
+                                <ListItemText
+                                    primary={item.label}
+                                    classes={{ primary: classes.nav_text }}
+                                />
+                            </ListItem>
+                        )
+                    })}
+                    <Divider />
+                    <ListSubheader className={classes.section_header} disableSticky>
+                        Live TV
+                    </ListSubheader>
+                    {LIVE_TV_ITEMS.map((item) => {
                         const isActive = currentPath === item.path
                         return (
                             <ListItem
