@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { makeStyles } from '@material-ui/core/styles'
-import { Grid, Card, CardActionArea, Typography, Dialog, IconButton, AppBar, Toolbar } from '@material-ui/core'
-import CloseIcon from '@material-ui/icons/Close'
+import { Grid, Card, CardActionArea, Typography, IconButton } from '@material-ui/core'
+import ArrowBackIcon from '@material-ui/icons/ArrowBack'
 import FiberManualRecordIcon from '@material-ui/icons/FiberManualRecord'
 import ReactPlayer from 'react-player'
 import Header from '../../Header/Header'
@@ -147,16 +147,17 @@ const useStyles = makeStyles((theme) => ({
         margin: 0,
         lineHeight: 1.5,
     },
-    appbar: {
+    player_topbar: {
+        display: 'flex',
+        alignItems: 'center',
         background: '#111111',
-        boxShadow: 'none',
-        position: 'relative',
+        padding: '0 8px',
+        height: 48,
+        gap: 8,
+        flexShrink: 0,
     },
-    stream_title: {
-        flex: 1,
+    player_back_btn: {
         color: '#ffffff',
-        fontWeight: 'bold',
-        paddingLeft: 8,
     },
     live_label: {
         background: '#e50914',
@@ -165,23 +166,43 @@ const useStyles = makeStyles((theme) => ({
         fontWeight: 'bold',
         padding: '2px 8px',
         borderRadius: 4,
-        marginRight: 8,
         letterSpacing: 1,
+        flexShrink: 0,
     },
-    close_btn: {
+    player_title: {
         color: '#ffffff',
+        fontWeight: 'bold',
+        fontSize: 15,
+        flex: 1,
     },
-    player_wrapper: {
+    player_area: {
+        width: '100%',
         background: '#000',
-        height: 'calc(100vh - 48px)',
         display: 'flex',
-        alignItems: 'center',
         justifyContent: 'center',
     },
+    player_frame: {
+        height: 'calc(100vh - 113px)',
+        aspectRatio: '16/9',
+        maxWidth: '100%',
+        border: 'none',
+        display: 'block',
+        background: '#000',
+    },
+    player_react_wrapper: {
+        height: 'calc(100vh - 113px)',
+        aspectRatio: '16/9',
+        maxWidth: '100%',
+        background: '#000',
+    },
     no_stream: {
+        height: 'calc(100vh - 113px)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#000',
         color: '#fff',
-        textAlign: 'center',
-        padding: 40,
     },
 }))
 
@@ -192,58 +213,20 @@ const News = () => {
     const [selectedChannel, setSelectedChannel] = useState(null)
 
     return (
-        <div className={classes.page}>
+        <div className={classes.page} style={selectedChannel ? { background: '#000' } : {}}>
             <Header />
-            <h1 className={`${classes.page_title} list_page_title`}>Live News TV</h1>
 
-            <Grid container className={classes.grid_wrapper}>
-                {CHANNELS.map((channel) => (
-                    <Grid item key={channel.id} xs={12} sm={6} md={4} className={classes.grid_item}>
-                        <Card className={classes.card} onClick={() => setSelectedChannel(channel)}>
-                            <CardActionArea className={classes.card_action}>
-                                <div
-                                    className={classes.card_banner}
-                                    style={{ background: channel.gradient }}
-                                >
-                                    <img
-                                        src={channel.logo}
-                                        alt={channel.name}
-                                        className={classes.channel_logo}
-                                        onError={(e) => {
-                                            e.target.style.display = 'none'
-                                            e.target.parentElement.style.background = channel.gradient
-                                        }}
-                                    />
-                                    <div className={classes.live_badge}>
-                                        <FiberManualRecordIcon className={classes.live_dot} />
-                                        LIVE
-                                    </div>
-                                </div>
-                                <div className={classes.card_content}>
-                                    <p className={classes.channel_name}>{channel.name}</p>
-                                    <p className={classes.channel_desc}>{channel.description}</p>
-                                </div>
-                            </CardActionArea>
-                        </Card>
-                    </Grid>
-                ))}
-            </Grid>
-
-            <Dialog fullScreen open={!!selectedChannel} onClose={() => setSelectedChannel(null)}>
-                <AppBar className={classes.appbar}>
-                    <Toolbar variant="dense">
-                        <IconButton className={classes.close_btn} onClick={() => setSelectedChannel(null)}>
-                            <CloseIcon />
+            {selectedChannel ? (
+                <>
+                    <div className={classes.player_topbar}>
+                        <IconButton className={classes.player_back_btn} onClick={() => setSelectedChannel(null)}>
+                            <ArrowBackIcon />
                         </IconButton>
                         <span className={classes.live_label}>LIVE</span>
-                        <Typography className={classes.stream_title}>
-                            {selectedChannel?.name}
-                        </Typography>
-                    </Toolbar>
-                </AppBar>
-                {selectedChannel && (
-                    <div className={classes.player_wrapper}>
-                        {selectedChannel.url && selectedChannel.url.includes('.m3u8') ? (
+                        <Typography className={classes.player_title}>{selectedChannel.name}</Typography>
+                    </div>
+                    {selectedChannel.url && selectedChannel.url.includes('.m3u8') ? (
+                        <div className={classes.player_react_wrapper}>
                             <ReactPlayer
                                 url={selectedChannel.url}
                                 width="100%"
@@ -258,27 +241,63 @@ const News = () => {
                                     }
                                 }}
                             />
-                        ) : selectedChannel.url ? (
+                        </div>
+                    ) : selectedChannel.url ? (
+                        <div className={classes.player_area}>
                             <iframe
                                 src={selectedChannel.url}
-                                width="100%"
-                                height="100%"
                                 allowFullScreen
                                 allow="autoplay; encrypted-media; picture-in-picture"
                                 title={selectedChannel.name}
-                                style={{ border: 'none' }}
+                                className={classes.player_frame}
                             />
-                        ) : (
-                            <div className={classes.no_stream}>
-                                <Typography variant="h6">Stream coming soon</Typography>
-                                <Typography variant="body2" style={{ color: '#aaa', marginTop: 8 }}>
-                                    Add the stream URL for {selectedChannel.name} in News.js
-                                </Typography>
-                            </div>
-                        )}
-                    </div>
-                )}
-            </Dialog>
+                        </div>
+                    ) : (
+                        <div className={classes.no_stream}>
+                            <Typography variant="h6">Stream coming soon</Typography>
+                            <Typography variant="body2" style={{ color: '#aaa', marginTop: 8 }}>
+                                Add the stream URL for {selectedChannel.name} in News.js
+                            </Typography>
+                        </div>
+                    )}
+                </>
+            ) : (
+                <>
+                    <h1 className={`${classes.page_title} list_page_title`}>Live News TV</h1>
+                    <Grid container className={classes.grid_wrapper}>
+                        {CHANNELS.map((channel) => (
+                            <Grid item key={channel.id} xs={12} sm={6} md={4} className={classes.grid_item}>
+                                <Card className={classes.card} onClick={() => setSelectedChannel(channel)}>
+                                    <CardActionArea className={classes.card_action}>
+                                        <div
+                                            className={classes.card_banner}
+                                            style={{ background: channel.gradient }}
+                                        >
+                                            <img
+                                                src={channel.logo}
+                                                alt={channel.name}
+                                                className={classes.channel_logo}
+                                                onError={(e) => {
+                                                    e.target.style.display = 'none'
+                                                    e.target.parentElement.style.background = channel.gradient
+                                                }}
+                                            />
+                                            <div className={classes.live_badge}>
+                                                <FiberManualRecordIcon className={classes.live_dot} />
+                                                LIVE
+                                            </div>
+                                        </div>
+                                        <div className={classes.card_content}>
+                                            <p className={classes.channel_name}>{channel.name}</p>
+                                            <p className={classes.channel_desc}>{channel.description}</p>
+                                        </div>
+                                    </CardActionArea>
+                                </Card>
+                            </Grid>
+                        ))}
+                    </Grid>
+                </>
+            )}
         </div>
     )
 }
