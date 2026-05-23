@@ -13,11 +13,14 @@ import SkipPreviousIcon from '@material-ui/icons/SkipPrevious'
 import VolumeUpIcon from '@material-ui/icons/VolumeUp'
 import VolumeOffIcon from '@material-ui/icons/VolumeOff'
 import MusicNoteIcon from '@material-ui/icons/MusicNote'
+import LibraryMusicIcon from '@material-ui/icons/LibraryMusic'
 import ShuffleIcon from '@material-ui/icons/Shuffle'
 import RepeatIcon from '@material-ui/icons/Repeat'
 import RepeatOneIcon from '@material-ui/icons/RepeatOne'
 import GetAppIcon from '@material-ui/icons/GetApp'
 import SearchIcon from '@material-ui/icons/Search'
+import ArrowBackIcon from '@material-ui/icons/ArrowBack'
+import AllInclusiveIcon from '@material-ui/icons/AllInclusive'
 import axios from 'axios'
 import Header from '../Header/Header'
 import { clearMusicSearch } from '../../store/actions/ListPageActionTypes'
@@ -30,6 +33,16 @@ const mapTrack = (t) => ({
     artist: t.artists?.primary?.map(a => a.name).join(', ') || '',
     cover: t.image?.[2]?.url || t.image?.[1]?.url || '',
     previewUrl: t.downloadUrl?.[4]?.url || t.downloadUrl?.[3]?.url || t.downloadUrl?.[2]?.url || '',
+    duration: Number(t.duration) || 0,
+})
+
+const mapAlbum = (a) => ({
+    id: a.id,
+    name: a.name || '',
+    artist: a.artists?.primary?.map(x => x.name).join(', ') || '',
+    cover: a.image?.[2]?.url || a.image?.[1]?.url || '',
+    year: a.year || '',
+    language: a.language || '',
 })
 
 const CATEGORIES = [
@@ -96,6 +109,20 @@ const CATEGORIES = [
     ]},
 ]
 
+// Each query yields up to 40 albums per page; pages keep loading until saavn returns empty
+const ALBUM_CATEGORIES = [
+    { label: '🎬 Telugu', queries: [
+        'telugu movie', 'tollywood', 'telugu film',
+        'thaman s', 'devi sri prasad', 'manisharma',
+        'mm keeravaani', 'telugu cinema',
+    ]},
+    { label: '🎪 Hindi', queries: [
+        'hindi movie', 'bollywood', 'hindi film',
+        'arijit singh', 'pritam', 'vishal shekhar',
+        'ar rahman hindi', 'shankar ehsaan loy',
+    ]},
+]
+
 const useStyles = makeStyles((theme) => ({
     page: {
         minHeight: '100vh',
@@ -106,7 +133,7 @@ const useStyles = makeStyles((theme) => ({
     top_bar: {
         display: 'flex',
         alignItems: 'center',
-        padding: '16px 24px 8px',
+        padding: '16px 24px 0',
     },
     page_title: {
         color: '#4d4d4d',
@@ -115,6 +142,30 @@ const useStyles = makeStyles((theme) => ({
         margin: 0,
         fontSize: 22,
     },
+    tab_bar: {
+        display: 'flex',
+        borderBottom: '2px solid #e0e0e0',
+        margin: '8px 24px 0',
+    },
+    tab_btn: {
+        padding: '10px 24px',
+        border: 'none',
+        background: 'none',
+        cursor: 'pointer',
+        fontSize: 14,
+        fontWeight: 700,
+        color: '#999',
+        borderBottom: '3px solid transparent',
+        marginBottom: -2,
+        transition: 'color 0.2s, border-color 0.2s',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+    },
+    tab_btn_active: {
+        color: '#1DB954',
+        borderBottomColor: '#1DB954',
+    },
     search_bar: {
         display: 'flex',
         alignItems: 'center',
@@ -122,14 +173,10 @@ const useStyles = makeStyles((theme) => ({
         borderRadius: 24,
         padding: '6px 16px',
         gap: 8,
-        margin: '0 24px 12px',
+        margin: '12px 24px',
         maxWidth: 480,
     },
-    search_input: {
-        color: '#333',
-        flex: 1,
-        fontSize: 14,
-    },
+    search_input: { color: '#333', flex: 1, fontSize: 14 },
     search_icon_color: { color: '#999', fontSize: 18 },
     categories_row: {
         display: 'flex',
@@ -156,16 +203,8 @@ const useStyles = makeStyles((theme) => ({
         justifyContent: 'space-between',
         padding: '0 24px 12px',
     },
-    section_title: {
-        color: '#4d4d4d',
-        fontSize: 16,
-        fontWeight: 'bold',
-        margin: 0,
-    },
-    song_count: {
-        color: '#999',
-        fontSize: 12,
-    },
+    section_title: { color: '#4d4d4d', fontSize: 16, fontWeight: 'bold', margin: 0 },
+    song_count: { color: '#999', fontSize: 12 },
     grid_wrapper: { padding: '0 12px 20px' },
     card: {
         width: 170,
@@ -180,90 +219,130 @@ const useStyles = makeStyles((theme) => ({
     card_img_placeholder: {
         height: 170,
         background: 'linear-gradient(135deg, #1DB954 0%, #191414 100%)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
     },
     play_overlay: {
-        position: 'absolute',
-        inset: 0,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'rgba(0,0,0,0.4)',
-        opacity: 0,
-        transition: 'opacity 0.2s',
+        position: 'absolute', inset: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'rgba(0,0,0,0.4)', opacity: 0, transition: 'opacity 0.2s',
         '$card:hover &': { opacity: 1 },
     },
     play_overlay_icon: {
-        color: '#1DB954',
-        fontSize: 52,
-        background: '#000',
-        borderRadius: '50%',
-        padding: 4,
+        color: '#1DB954', fontSize: 52, background: '#000', borderRadius: '50%', padding: 4,
     },
     card_content: { padding: '10px 12px 12px !important' },
     song_title: {
-        fontSize: 12,
-        fontWeight: 'bold',
-        color: '#333',
-        margin: '0 0 4px',
-        whiteSpace: 'nowrap',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
+        fontSize: 12, fontWeight: 'bold', color: '#333', margin: '0 0 4px',
+        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
     },
     song_artist: {
-        fontSize: 11,
-        color: '#9b9b9b',
-        margin: 0,
-        whiteSpace: 'nowrap',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
+        fontSize: 11, color: '#9b9b9b', margin: 0,
+        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
     },
-    no_data: {
+    // ----- Album card -----
+    album_card: {
+        width: 170,
+        background: '#fff',
+        borderRadius: 8,
+        margin: 10,
+        cursor: 'pointer',
+        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+        '&:hover': { transform: 'translateY(-4px)', boxShadow: '0 8px 24px rgba(0,0,0,0.12)' },
+    },
+    album_img: { height: 170, objectFit: 'cover', background: '#ddd', borderRadius: '8px 8px 0 0' },
+    album_img_placeholder: {
+        height: 170,
+        background: 'linear-gradient(135deg, #333 0%, #555 100%)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        borderRadius: '8px 8px 0 0',
+    },
+    album_content: { padding: '10px 12px 12px' },
+    album_name: {
+        fontSize: 12, fontWeight: 'bold', color: '#333', margin: '0 0 4px',
+        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+    },
+    album_artist: {
+        fontSize: 11, color: '#9b9b9b', margin: '0 0 4px',
+        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+    },
+    album_year: {
+        fontSize: 10, background: '#1DB954', color: '#fff',
+        borderRadius: 4, padding: '2px 6px', display: 'inline-block',
+    },
+    // ----- Album detail (songs list) -----
+    album_back_bar: {
         display: 'flex',
-        flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center',
-        padding: 60,
-        color: '#9b9b9b',
+        gap: 16,
+        padding: '14px 24px',
+        background: '#fff',
+        borderBottom: '1px solid #e0e0e0',
+    },
+    album_detail_cover: {
+        width: 64, height: 64, borderRadius: 8, objectFit: 'cover', flexShrink: 0,
+    },
+    album_detail_cover_placeholder: {
+        width: 64, height: 64, borderRadius: 8, flexShrink: 0,
+        background: 'linear-gradient(135deg, #333 0%, #555 100%)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+    },
+    album_detail_info: { flex: 1, minWidth: 0 },
+    album_detail_name: {
+        fontSize: 16, fontWeight: 'bold', color: '#222', margin: 0,
+        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+    },
+    album_detail_sub: { fontSize: 12, color: '#777', margin: '3px 0 0' },
+    // ----- Track list -----
+    track_list: { background: '#fff', margin: '12px 0', borderRadius: 0 },
+    track_row: {
+        display: 'flex',
+        alignItems: 'center',
+        padding: '10px 24px',
+        cursor: 'pointer',
+        borderBottom: '1px solid #f5f5f5',
+        transition: 'background 0.15s',
+        '&:hover': { background: '#f9f9f9' },
+    },
+    track_row_active: { background: '#f0faf4 !important' },
+    track_num: { width: 28, fontSize: 12, color: '#aaa', flexShrink: 0, textAlign: 'center' },
+    track_thumb: { width: 40, height: 40, borderRadius: 4, objectFit: 'cover', flexShrink: 0, marginRight: 12 },
+    track_thumb_placeholder: {
+        width: 40, height: 40, borderRadius: 4, flexShrink: 0, marginRight: 12,
+        background: 'linear-gradient(135deg, #1DB954 0%, #191414 100%)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+    },
+    track_info: { flex: 1, minWidth: 0 },
+    track_title: {
+        fontSize: 13, fontWeight: 600, color: '#333',
+        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0,
+    },
+    track_title_active: { color: '#1DB954 !important' },
+    track_artist: { fontSize: 11, color: '#999', margin: '2px 0 0' },
+    track_duration: { fontSize: 11, color: '#bbb', flexShrink: 0, marginLeft: 12 },
+    // ----- Shared -----
+    no_data: {
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        justifyContent: 'center', padding: 60, color: '#9b9b9b',
     },
     loading_center: { display: 'flex', justifyContent: 'center', padding: 60 },
-    load_more_row: {
-        display: 'flex',
-        justifyContent: 'center',
-        padding: '8px 0 24px',
-    },
+    load_more_row: { display: 'flex', justifyContent: 'center', padding: '8px 0 24px' },
     load_more_btn: {
-        background: '#e0e0e0',
-        color: '#444',
-        borderRadius: 24,
-        padding: '8px 32px',
-        textTransform: 'none',
-        fontWeight: 'bold',
+        background: '#e0e0e0', color: '#444', borderRadius: 24, padding: '8px 32px',
+        textTransform: 'none', fontWeight: 'bold',
         '&:hover': { background: '#d0d0d0' },
-        '&:disabled': { color: '#aaa' },
     },
+    // ----- Player bar -----
     player_bar: {
-        position: 'fixed',
-        bottom: 0, left: 0, right: 0,
-        background: '#fff',
-        borderTop: '1px solid #e0e0e0',
-        display: 'flex',
-        alignItems: 'center',
-        padding: '10px 20px',
-        zIndex: 1000,
-        gap: 12,
+        position: 'fixed', bottom: 0, left: 0, right: 0,
+        background: '#fff', borderTop: '1px solid #e0e0e0',
+        display: 'flex', alignItems: 'center', padding: '10px 20px', zIndex: 1000, gap: 12,
         [theme.breakpoints.down('sm')]: { flexWrap: 'wrap', padding: '8px 12px' },
     },
-    player_art: {
-        width: 52, height: 52, borderRadius: 6,
-        objectFit: 'cover', flexShrink: 0, background: '#333',
-    },
+    player_art: { width: 52, height: 52, borderRadius: 6, objectFit: 'cover', flexShrink: 0 },
     player_art_placeholder: {
-        width: 52, height: 52, borderRadius: 6,
+        width: 52, height: 52, borderRadius: 6, flexShrink: 0,
         background: 'linear-gradient(135deg, #1DB954 0%, #191414 100%)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
     },
     player_info: { minWidth: 0, flex: '0 0 150px' },
     player_title: {
@@ -275,21 +354,37 @@ const useStyles = makeStyles((theme) => ({
         whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
     },
     player_controls: { display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 },
-    play_btn: {
-        background: '#1DB954', color: '#fff', padding: 6,
-        '&:hover': { background: '#17a349' },
-    },
+    play_btn: { background: '#1DB954', color: '#fff', padding: 6, '&:hover': { background: '#17a349' } },
     icon_btn: { color: '#9b9b9b', '&:hover': { color: '#333' } },
     icon_active: { color: '#1DB954 !important' },
-    player_progress: {
-        flex: 1, minWidth: 80, display: 'flex', alignItems: 'center', gap: 8,
-    },
+    player_progress: { flex: 1, minWidth: 80, display: 'flex', alignItems: 'center', gap: 8 },
     time_label: { fontSize: 11, color: '#999', flexShrink: 0, minWidth: 36 },
     volume_section: {
         display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, width: 120,
         [theme.breakpoints.down('sm')]: { display: 'none' },
     },
     dl_btn: { color: '#9b9b9b', flexShrink: 0, '&:hover': { color: '#1DB954' } },
+    loop_btn: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 4,
+        padding: '5px 14px',
+        border: '1.5px solid #e0e0e0',
+        borderRadius: 20,
+        background: 'none',
+        cursor: 'pointer',
+        fontSize: 12,
+        fontWeight: 700,
+        color: '#aaa',
+        transition: 'all 0.2s',
+        flexShrink: 0,
+        '&:hover': { borderColor: '#1DB954', color: '#1DB954' },
+    },
+    loop_btn_active: {
+        borderColor: '#1DB954 !important',
+        color: '#1DB954 !important',
+        background: 'rgba(29,185,84,0.1)',
+    },
 }))
 
 const fmt = (secs) => {
@@ -314,15 +409,37 @@ const Music = () => {
     const dispatch = useDispatch()
     const { musicSearchData, musicSearchFlag, searchValue } = useSelector(s => s.ListPageReducer)
 
-    const [songs, setSongs]                             = useState([])
-    const [loadingCat, setLoadingCat]                   = useState(false)
-    const [loadingMore, setLoadingMore]                 = useState(false)
-    const [currentCategory, setCurrentCategory]         = useState(CATEGORIES[0])
-    const [queryIndex, setQueryIndex]                   = useState(0)
-    const [localSearch, setLocalSearch]                 = useState('')
-    const [localSearchResults, setLocalSearchResults]   = useState(null)
-    const [localSearchLoading, setLocalSearchLoading]   = useState(false)
+    // ----- Tab -----
+    const [activeTab, setActiveTab] = useState('songs')
 
+    // ----- Songs tab -----
+    const [songs, setSongs]                           = useState([])
+    const [loadingCat, setLoadingCat]                 = useState(false)
+    const [loadingMore, setLoadingMore]               = useState(false)
+    const [currentCategory, setCurrentCategory]       = useState(CATEGORIES[0])
+    const [queryIndex, setQueryIndex]                 = useState(0)
+    const [localSearch, setLocalSearch]               = useState('')
+    const [localSearchResults, setLocalSearchResults] = useState(null)
+    const [localSearchLoading, setLocalSearchLoading] = useState(false)
+
+    // ----- Albums tab -----
+    const [albumCategory, setAlbumCategory]         = useState(ALBUM_CATEGORIES[0])
+    const [albums, setAlbums]                       = useState([])
+    const [loadingAlbums, setLoadingAlbums]         = useState(false)
+    const [loadingMoreAlbums, setLoadingMoreAlbums] = useState(false)
+    const [albumQueryIndex, setAlbumQueryIndex]     = useState(0)
+    const [albumPage, setAlbumPage]                 = useState(1)
+    const [albumsExhausted, setAlbumsExhausted]     = useState(false)
+    const [selectedAlbum, setSelectedAlbum]         = useState(null)
+    const [albumSongs, setAlbumSongs]               = useState([])
+    const [loadingAlbumSongs, setLoadingAlbumSongs] = useState(false)
+    const [continuousPlay, setContinuousPlay]       = useState(false)
+    const [autoLoadingAlbum, setAutoLoadingAlbum]   = useState(false)
+    const [albumSearch, setAlbumSearch]             = useState('')
+    const [albumSearchResults, setAlbumSearchResults] = useState(null)
+    const [albumSearchLoading, setAlbumSearchLoading] = useState(false)
+
+    // ----- Player -----
     const [currentSong, setCurrentSong]   = useState(null)
     const [currentIndex, setCurrentIndex] = useState(-1)
     const [isPlaying, setIsPlaying]       = useState(false)
@@ -335,15 +452,22 @@ const Music = () => {
     const [repeat, setRepeat]             = useState('none')
     const [downloading, setDownloading]   = useState(false)
 
-    const audioRef       = useRef(null)
-    const searchTimerRef = useRef(null)
-    const loaderRef      = useRef(null)
+    const audioRef            = useRef(null)
+    const searchTimerRef      = useRef(null)
+    const albumSearchTimerRef = useRef(null)
+    const loaderRef           = useRef(null)
 
+    // Songs shown in the Songs tab grid
     const displaySongs = musicSearchFlag
         ? musicSearchData
         : localSearchResults !== null
             ? localSearchResults
             : songs
+
+    // Queue the player's skip next/prev navigates through
+    const playQueue = (activeTab === 'albums' && selectedAlbum && albumSongs.length > 0)
+        ? albumSongs
+        : displaySongs
 
     const activeSectionLabel = musicSearchFlag
         ? `Results for "${searchValue}"`
@@ -353,16 +477,17 @@ const Music = () => {
 
     const hasMoreQueries = queryIndex + 1 < currentCategory.queries.length
 
+    const displayAlbums = albumSearchResults !== null ? albumSearchResults : albums
+
+    // ---- Songs tab fetching ----
     const fetchQuery = useCallback((query, append = false) => {
-        return axios.get(`${SAAVN_BASE}/search/songs`, {
-            params: { query, limit: 50 }
-        })
-        .then((res) => {
-            const data = (res.data?.data?.results || []).map(mapTrack)
-            if (append) setSongs(prev => dedup([...prev, ...data]))
-            else setSongs(dedup(data))
-            return data
-        })
+        return axios.get(`${SAAVN_BASE}/search/songs`, { params: { query, limit: 50 } })
+            .then((res) => {
+                const data = (res.data?.data?.results || []).map(mapTrack)
+                if (append) setSongs(prev => dedup([...prev, ...data]))
+                else setSongs(dedup(data))
+                return data
+            })
     }, [])
 
     useEffect(() => {
@@ -397,6 +522,63 @@ const Music = () => {
         // eslint-disable-next-line
     }, [loadingMore, loadingCat, hasMoreQueries, musicSearchFlag, localSearchResults, queryIndex])
 
+    // ---- Albums tab fetching ----
+    const dedupAlbums = (arr) => {
+        const seen = new Set()
+        return arr.filter(a => { if (seen.has(a.id)) return false; seen.add(a.id); return true })
+    }
+
+    const sortByYear = (arr) => [...arr].sort((a, b) => (Number(b.year) || 0) - (Number(a.year) || 0))
+
+    const fetchAlbumsPage = useCallback((query, page) =>
+        axios.get(`${SAAVN_BASE}/search/albums`, { params: { query, limit: 40, page } })
+            .then(res => (res.data?.data?.results || []).map(mapAlbum))
+    , [])
+
+    // Reset and load page 1 whenever tab becomes active or category changes
+    useEffect(() => {
+        if (activeTab !== 'albums') return
+        setAlbums([])
+        setAlbumQueryIndex(0)
+        setAlbumPage(1)
+        setAlbumsExhausted(false)
+        setSelectedAlbum(null)
+        setAlbumSongs([])
+        setLoadingAlbums(true)
+        fetchAlbumsPage(albumCategory.queries[0], 1)
+            .then(data => setAlbums(sortByYear(dedupAlbums(data))))
+            .catch(e => console.log(e))
+            .finally(() => setLoadingAlbums(false))
+        // eslint-disable-next-line
+    }, [activeTab, albumCategory])
+
+    const handleAlbumLoadMore = async () => {
+        if (loadingMoreAlbums || albumsExhausted) return
+        setLoadingMoreAlbums(true)
+        try {
+            const nextPage = albumPage + 1
+            let data = await fetchAlbumsPage(albumCategory.queries[albumQueryIndex], nextPage)
+            if (data.length > 0) {
+                setAlbums(prev => sortByYear(dedupAlbums([...prev, ...data])))
+                setAlbumPage(nextPage)
+            } else {
+                // current query exhausted — try next query
+                const nextQIdx = albumQueryIndex + 1
+                if (nextQIdx < albumCategory.queries.length) {
+                    data = await fetchAlbumsPage(albumCategory.queries[nextQIdx], 1)
+                    setAlbums(prev => sortByYear(dedupAlbums([...prev, ...data])))
+                    setAlbumQueryIndex(nextQIdx)
+                    setAlbumPage(1)
+                    if (data.length === 0) setAlbumsExhausted(true)
+                } else {
+                    setAlbumsExhausted(true)
+                }
+            }
+        } catch (e) { console.log(e) }
+        finally { setLoadingMoreAlbums(false) }
+    }
+
+    // ---- Handlers ----
     const handleLoadMore = () => {
         const nextIdx = queryIndex + 1
         if (nextIdx >= currentCategory.queries.length) return
@@ -426,18 +608,74 @@ const Music = () => {
         if (!value.trim()) { setLocalSearchResults(null); return }
         setLocalSearchLoading(true)
         searchTimerRef.current = setTimeout(() => {
-            axios.get(`${SAAVN_BASE}/search/songs`, {
-                params: { query: value, limit: 50 }
-            })
-            .then((res) => {
-                const data = (res.data?.data?.results || []).map(mapTrack)
-                setLocalSearchResults(data)
-            })
-            .catch(e => console.log(e))
-            .finally(() => setLocalSearchLoading(false))
+            axios.get(`${SAAVN_BASE}/search/songs`, { params: { query: value, limit: 50 } })
+                .then((res) => {
+                    const data = (res.data?.data?.results || []).map(mapTrack)
+                    setLocalSearchResults(data)
+                })
+                .catch(e => console.log(e))
+                .finally(() => setLocalSearchLoading(false))
         }, 500)
     }
 
+    const handleAlbumCategoryClick = (cat) => {
+        setAlbumCategory(cat)
+        setAlbumSearch('')
+        setAlbumSearchResults(null)
+    }
+
+    const handleAlbumSearch = (e) => {
+        const value = e.target.value
+        setAlbumSearch(value)
+        if (albumSearchTimerRef.current) clearTimeout(albumSearchTimerRef.current)
+        if (!value.trim()) { setAlbumSearchResults(null); return }
+        setAlbumSearchLoading(true)
+        albumSearchTimerRef.current = setTimeout(() => {
+            axios.get(`${SAAVN_BASE}/search/albums`, { params: { query: value, limit: 40 } })
+                .then((res) => {
+                    const data = (res.data?.data?.results || []).map(mapAlbum)
+                    setAlbumSearchResults(sortByYear(data))
+                })
+                .catch(e => console.log(e))
+                .finally(() => setAlbumSearchLoading(false))
+        }, 500)
+    }
+
+    const handleAlbumClick = async (album) => {
+        setSelectedAlbum(album)
+        setLoadingAlbumSongs(true)
+        setAlbumSongs([])
+        try {
+            const res = await axios.get(`${SAAVN_BASE}/albums`, { params: { id: album.id } })
+            setAlbumSongs((res.data?.data?.songs || []).map(mapTrack))
+        } catch (e) { console.log(e) }
+        finally { setLoadingAlbumSongs(false) }
+    }
+
+    const handleBackFromAlbum = () => {
+        setSelectedAlbum(null)
+        setAlbumSongs([])
+    }
+
+    // Auto-advances to the next album in the list and plays its first song
+    const loadAndPlayAlbum = async (album) => {
+        setAutoLoadingAlbum(true)
+        setSelectedAlbum(album)
+        setAlbumSongs([])
+        try {
+            const res = await axios.get(`${SAAVN_BASE}/albums`, { params: { id: album.id } })
+            const songs = (res.data?.data?.songs || []).map(mapTrack)
+            setAlbumSongs(songs)
+            if (songs.length > 0) {
+                setCurrentSong(songs[0])
+                setCurrentIndex(0)
+                setStreamUrl(songs[0].previewUrl || '')
+            }
+        } catch (e) { console.log(e) }
+        finally { setAutoLoadingAlbum(false) }
+    }
+
+    // ---- Player ----
     const togglePlay = () => {
         if (!audioRef.current) return
         if (isPlaying) { audioRef.current.pause(); setIsPlaying(false) }
@@ -461,32 +699,35 @@ const Music = () => {
     const getNextIndex = () => {
         if (shuffle) {
             let idx
-            do { idx = Math.floor(Math.random() * displaySongs.length) } while (idx === currentIndex && displaySongs.length > 1)
+            do { idx = Math.floor(Math.random() * playQueue.length) } while (idx === currentIndex && playQueue.length > 1)
             return idx
         }
-        return (currentIndex + 1) % displaySongs.length
+        return (currentIndex + 1) % playQueue.length
     }
 
     const skipNext = () => {
-        if (!displaySongs.length) return
+        if (!playQueue.length) return
         const next = getNextIndex()
-        playSong(displaySongs[next], next)
+        playSong(playQueue[next], next)
     }
 
-    const cycleRepeat = () => {
-        setRepeat(r => r === 'none' ? 'all' : r === 'all' ? 'one' : 'none')
-    }
+    const cycleRepeat = () => setRepeat(r => r === 'none' ? 'all' : r === 'all' ? 'one' : 'none')
 
     const skipPrev = () => {
-        if (!displaySongs.length) return
+        if (!playQueue.length) return
         if (audioRef.current && audioRef.current.currentTime > 3) { audioRef.current.currentTime = 0; return }
-        const prev = (currentIndex - 1 + displaySongs.length) % displaySongs.length
-        playSong(displaySongs[prev], prev)
+        const prev = (currentIndex - 1 + playQueue.length) % playQueue.length
+        playSong(playQueue[prev], prev)
     }
 
     const handleEnded = () => {
         if (repeat === 'one') { audioRef.current.currentTime = 0; audioRef.current.play().catch(() => {}) }
-        else if (repeat === 'all' || currentIndex < displaySongs.length - 1) skipNext()
+        else if (repeat === 'all' || currentIndex < playQueue.length - 1) skipNext()
+        else if (continuousPlay && activeTab === 'albums' && selectedAlbum && albums.length > 1) {
+            const currentAlbumIdx = albums.findIndex(a => a.id === selectedAlbum.id)
+            const nextAlbumIdx = (currentAlbumIdx + 1) % albums.length
+            loadAndPlayAlbum(albums[nextAlbumIdx])
+        }
         else setIsPlaying(false)
     }
 
@@ -508,10 +749,6 @@ const Music = () => {
         finally { setDownloading(false) }
     }
 
-    const getArtwork = (song) => song.cover || ''
-    const getTitle   = (song) => song.title || ''
-    const getArtist  = (song) => song.artist || ''
-
     return (
         <div className={classes.page}>
             <Header />
@@ -520,106 +757,309 @@ const Music = () => {
                 <h1 className={classes.page_title}>Music</h1>
             </div>
 
-            <div className={classes.search_bar}>
-                <SearchIcon className={classes.search_icon_color} />
-                <InputBase
-                    className={classes.search_input}
-                    placeholder="Search songs, artists…"
-                    value={localSearch}
-                    onChange={handleLocalSearch}
-                    inputProps={{ 'aria-label': 'search songs' }}
-                />
-                {localSearchLoading && <CircularProgress size={16} style={{ color: '#1DB954' }} />}
+            {/* Tab Bar */}
+            <div className={classes.tab_bar}>
+                <button
+                    className={`${classes.tab_btn} ${activeTab === 'songs' ? classes.tab_btn_active : ''}`}
+                    onClick={() => setActiveTab('songs')}
+                >
+                    <MusicNoteIcon style={{ fontSize: 16 }} /> Songs
+                </button>
+                <button
+                    className={`${classes.tab_btn} ${activeTab === 'albums' ? classes.tab_btn_active : ''}`}
+                    onClick={() => setActiveTab('albums')}
+                >
+                    <LibraryMusicIcon style={{ fontSize: 16 }} /> Albums
+                </button>
             </div>
 
-            {!musicSearchFlag && (
-                <div className={classes.categories_row}>
-                    {CATEGORIES.map((cat) => (
-                        <Chip
-                            key={cat.label}
-                            label={cat.label}
-                            className={`${classes.chip} ${currentCategory.label === cat.label && !localSearchResults ? classes.chip_active : ''}`}
-                            onClick={() => handleCategoryClick(cat)}
-                            clickable
+            {/* ===== SONGS TAB ===== */}
+            {activeTab === 'songs' && (
+                <>
+                    <div className={classes.search_bar}>
+                        <SearchIcon className={classes.search_icon_color} />
+                        <InputBase
+                            className={classes.search_input}
+                            placeholder="Search songs, artists…"
+                            value={localSearch}
+                            onChange={handleLocalSearch}
+                            inputProps={{ 'aria-label': 'search songs' }}
                         />
-                    ))}
-                </div>
+                        {localSearchLoading && <CircularProgress size={16} style={{ color: '#1DB954' }} />}
+                    </div>
+
+                    {!musicSearchFlag && (
+                        <div className={classes.categories_row}>
+                            {CATEGORIES.map((cat) => (
+                                <Chip
+                                    key={cat.label}
+                                    label={cat.label}
+                                    className={`${classes.chip} ${currentCategory.label === cat.label && !localSearchResults ? classes.chip_active : ''}`}
+                                    onClick={() => handleCategoryClick(cat)}
+                                    clickable
+                                />
+                            ))}
+                        </div>
+                    )}
+
+                    <div className={classes.section_header}>
+                        <span className={classes.section_title}>{activeSectionLabel}</span>
+                        <span className={classes.song_count}>{displaySongs.length} songs</span>
+                    </div>
+
+                    {loadingCat ? (
+                        <div className={classes.loading_center}>
+                            <CircularProgress style={{ color: '#1DB954' }} />
+                        </div>
+                    ) : (
+                        <>
+                            <Grid container justifyContent="center" className={classes.grid_wrapper}>
+                                {displaySongs.length === 0 ? (
+                                    <div className={classes.no_data}>
+                                        <MusicNoteIcon style={{ fontSize: 48, marginBottom: 12 }} />
+                                        <span>No songs found</span>
+                                    </div>
+                                ) : (
+                                    displaySongs.map((song, i) => (
+                                        <Grid item key={`${song.id}-${i}`}>
+                                            <Tooltip title={song.title || ''} placement="top">
+                                                <Card
+                                                    className={`${classes.card} ${currentSong === song ? classes.card_active : ''}`}
+                                                    onClick={() => playSong(song, i)}
+                                                >
+                                                    <CardActionArea>
+                                                        <div style={{ position: 'relative' }}>
+                                                            {song.cover ? (
+                                                                <CardMedia
+                                                                    component="img"
+                                                                    image={song.cover}
+                                                                    alt={song.title}
+                                                                    className={classes.card_img}
+                                                                    onError={(e) => { e.target.style.display = 'none' }}
+                                                                />
+                                                            ) : (
+                                                                <div className={classes.card_img_placeholder}>
+                                                                    <MusicNoteIcon style={{ color: 'rgba(255,255,255,0.4)', fontSize: 40 }} />
+                                                                </div>
+                                                            )}
+                                                            <div className={classes.play_overlay}>
+                                                                {currentSong === song && isPlaying
+                                                                    ? <PauseIcon className={classes.play_overlay_icon} />
+                                                                    : <PlayArrowIcon className={classes.play_overlay_icon} />
+                                                                }
+                                                            </div>
+                                                        </div>
+                                                        <CardContent className={classes.card_content}>
+                                                            <p className={classes.song_title}>{song.title}</p>
+                                                            <Typography className={classes.song_artist}>{song.artist}</Typography>
+                                                        </CardContent>
+                                                    </CardActionArea>
+                                                </Card>
+                                            </Tooltip>
+                                        </Grid>
+                                    ))
+                                )}
+                            </Grid>
+
+                            {!musicSearchFlag && localSearchResults === null && (
+                                <div ref={loaderRef} className={classes.load_more_row}>
+                                    {loadingMore
+                                        ? <CircularProgress style={{ color: '#1DB954' }} />
+                                        : hasMoreQueries
+                                            ? <Button className={classes.load_more_btn} onClick={handleLoadMore}>Load More</Button>
+                                            : songs.length > 0 && (
+                                                <span style={{ color: '#555', fontSize: 13 }}>You've seen all songs in this category</span>
+                                            )
+                                    }
+                                </div>
+                            )}
+                        </>
+                    )}
+                </>
             )}
 
-            <div className={classes.section_header}>
-                <span className={classes.section_title}>{activeSectionLabel}</span>
-                <span className={classes.song_count}>{displaySongs.length} songs</span>
-            </div>
-
-            {loadingCat ? (
-                <div className={classes.loading_center}>
-                    <CircularProgress style={{ color: '#1DB954' }} />
-                </div>
-            ) : (
+            {/* ===== ALBUMS TAB ===== */}
+            {activeTab === 'albums' && (
                 <>
-                    <Grid container justifyContent="center" className={classes.grid_wrapper}>
-                        {displaySongs.length === 0 ? (
-                            <div className={classes.no_data}>
-                                <MusicNoteIcon style={{ fontSize: 48, marginBottom: 12 }} />
-                                <span>No songs found</span>
+                    {/* Album search bar */}
+                    {!selectedAlbum && (
+                        <div className={classes.search_bar}>
+                            <SearchIcon className={classes.search_icon_color} />
+                            <InputBase
+                                className={classes.search_input}
+                                placeholder="Search albums…"
+                                value={albumSearch}
+                                onChange={handleAlbumSearch}
+                                inputProps={{ 'aria-label': 'search albums' }}
+                            />
+                            {albumSearchLoading && <CircularProgress size={16} style={{ color: '#1DB954' }} />}
+                        </div>
+                    )}
+
+                    {/* Album category chips + loop toggle */}
+                    {!selectedAlbum && (
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px 0' }}>
+                            <div className={classes.categories_row} style={{ padding: 0, flex: 1 }}>
+                                {ALBUM_CATEGORIES.map((cat) => (
+                                    <Chip
+                                        key={cat.label}
+                                        label={cat.label}
+                                        className={`${classes.chip} ${albumCategory.label === cat.label ? classes.chip_active : ''}`}
+                                        onClick={() => handleAlbumCategoryClick(cat)}
+                                        clickable
+                                    />
+                                ))}
                             </div>
-                        ) : (
-                            displaySongs.map((song, i) => (
-                                <Grid item key={`${song.id}-${i}`}>
-                                    <Tooltip title={getTitle(song)} placement="top">
-                                        <Card
-                                            className={`${classes.card} ${currentSong === song ? classes.card_active : ''}`}
+                            <Tooltip title={continuousPlay ? 'Continuous album loop: On' : 'Continuous album loop: Off'}>
+                                <button
+                                    className={`${classes.loop_btn} ${continuousPlay ? classes.loop_btn_active : ''}`}
+                                    onClick={() => setContinuousPlay(c => !c)}
+                                    style={{ marginLeft: 12, flexShrink: 0 }}
+                                >
+                                    <AllInclusiveIcon style={{ fontSize: 16 }} />
+                                    Loop
+                                </button>
+                            </Tooltip>
+                        </div>
+                    )}
+
+                    {selectedAlbum ? (
+                        /* ---- Album songs view ---- */
+                        <>
+                            <div className={classes.album_back_bar}>
+                                <IconButton size="small" onClick={handleBackFromAlbum} style={{ color: '#555' }}>
+                                    <ArrowBackIcon />
+                                </IconButton>
+                                {selectedAlbum.cover ? (
+                                    <img src={selectedAlbum.cover} alt={selectedAlbum.name} className={classes.album_detail_cover} />
+                                ) : (
+                                    <div className={classes.album_detail_cover_placeholder}>
+                                        <LibraryMusicIcon style={{ color: 'rgba(255,255,255,0.5)', fontSize: 28 }} />
+                                    </div>
+                                )}
+                                <div className={classes.album_detail_info}>
+                                    <p className={classes.album_detail_name}>{selectedAlbum.name}</p>
+                                    <p className={classes.album_detail_sub}>
+                                        {selectedAlbum.artist}{selectedAlbum.year ? ` · ${selectedAlbum.year}` : ''}
+                                        {albumSongs.length > 0 ? ` · ${albumSongs.length} songs` : ''}
+                                    </p>
+                                </div>
+                                {albumSongs.length > 0 && (
+                                    <Tooltip title="Play all">
+                                        <IconButton
+                                            style={{ background: '#1DB954', color: '#fff', padding: 8 }}
+                                            onClick={() => playSong(albumSongs[0], 0)}
+                                        >
+                                            <PlayArrowIcon />
+                                        </IconButton>
+                                    </Tooltip>
+                                )}
+                            </div>
+
+                            {loadingAlbumSongs || autoLoadingAlbum ? (
+                                <div className={classes.loading_center}>
+                                    <CircularProgress style={{ color: '#1DB954' }} />
+                                </div>
+                            ) : albumSongs.length === 0 ? (
+                                <div className={classes.no_data}>
+                                    <MusicNoteIcon style={{ fontSize: 48, marginBottom: 12 }} />
+                                    <span>No songs found in this album</span>
+                                </div>
+                            ) : (
+                                <div className={classes.track_list}>
+                                    {albumSongs.map((song, i) => (
+                                        <div
+                                            key={`${song.id}-${i}`}
+                                            className={`${classes.track_row} ${currentSong === song ? classes.track_row_active : ''}`}
                                             onClick={() => playSong(song, i)}
                                         >
-                                            <CardActionArea>
-                                                <div style={{ position: 'relative' }}>
-                                                    {getArtwork(song) ? (
-                                                        <CardMedia
-                                                            component="img"
-                                                            image={getArtwork(song)}
-                                                            alt={getTitle(song)}
-                                                            className={classes.card_img}
-                                                            onError={(e) => { e.target.style.display = 'none' }}
-                                                        />
-                                                    ) : (
-                                                        <div className={classes.card_img_placeholder}>
-                                                            <MusicNoteIcon style={{ color: 'rgba(255,255,255,0.4)', fontSize: 40 }} />
-                                                        </div>
-                                                    )}
-                                                    <div className={classes.play_overlay}>
-                                                        {currentSong === song && isPlaying
-                                                            ? <PauseIcon className={classes.play_overlay_icon} />
-                                                            : <PlayArrowIcon className={classes.play_overlay_icon} />
-                                                        }
-                                                    </div>
+                                            <span className={classes.track_num}>
+                                                {currentSong === song && isPlaying
+                                                    ? <PauseIcon style={{ fontSize: 16, color: '#1DB954' }} />
+                                                    : currentSong === song
+                                                        ? <PlayArrowIcon style={{ fontSize: 16, color: '#1DB954' }} />
+                                                        : i + 1
+                                                }
+                                            </span>
+                                            {song.cover ? (
+                                                <img src={song.cover} alt={song.title} className={classes.track_thumb}
+                                                    onError={(e) => { e.target.style.display = 'none' }} />
+                                            ) : (
+                                                <div className={classes.track_thumb_placeholder}>
+                                                    <MusicNoteIcon style={{ color: 'rgba(255,255,255,0.5)', fontSize: 18 }} />
                                                 </div>
-                                                <CardContent className={classes.card_content}>
-                                                    <p className={classes.song_title}>{getTitle(song)}</p>
-                                                    <Typography className={classes.song_artist}>{getArtist(song)}</Typography>
-                                                </CardContent>
-                                            </CardActionArea>
-                                        </Card>
-                                    </Tooltip>
-                                </Grid>
-                            ))
-                        )}
-                    </Grid>
+                                            )}
+                                            <div className={classes.track_info}>
+                                                <p className={`${classes.track_title} ${currentSong === song ? classes.track_title_active : ''}`}>
+                                                    {song.title}
+                                                </p>
+                                                <p className={classes.track_artist}>{song.artist}</p>
+                                            </div>
+                                            <span className={classes.track_duration}>{fmt(song.duration)}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        /* ---- Albums grid ---- */
+                        <>
+                            <div className={classes.section_header} style={{ paddingTop: 4 }}>
+                                <span className={classes.section_title}>
+                                    {albumSearchResults !== null
+                                        ? `Results for "${albumSearch}"`
+                                        : `${albumCategory.label} Movie Albums`}
+                                </span>
+                                <span className={classes.song_count}>{displayAlbums.length} albums</span>
+                            </div>
 
-                    {!musicSearchFlag && localSearchResults === null && (
-                        <div ref={loaderRef} className={classes.load_more_row}>
-                            {loadingMore
-                                ? <CircularProgress style={{ color: '#1DB954' }} />
-                                : hasMoreQueries
-                                    ? (
-                                        <Button className={classes.load_more_btn} onClick={handleLoadMore}>
-                                            Load More
-                                        </Button>
-                                    )
-                                    : songs.length > 0 && (
-                                        <span style={{ color: '#555', fontSize: 13 }}>You've seen all songs in this category</span>
-                                    )
-                            }
-                        </div>
+                            {loadingAlbums ? (
+                                <div className={classes.loading_center}>
+                                    <CircularProgress style={{ color: '#1DB954' }} />
+                                </div>
+                            ) : displayAlbums.length === 0 ? (
+                                <div className={classes.no_data}>
+                                    <LibraryMusicIcon style={{ fontSize: 48, marginBottom: 12 }} />
+                                    <span>{albumSearchResults !== null ? 'No albums found for your search' : 'No albums found'}</span>
+                                </div>
+                            ) : (
+                                <>
+                                    <Grid container justifyContent="center" className={classes.grid_wrapper}>
+                                        {displayAlbums.map((album, i) => (
+                                            <Grid item key={`${album.id}-${i}`}>
+                                                <Tooltip title={album.name} placement="top">
+                                                    <div className={classes.album_card} onClick={() => handleAlbumClick(album)}>
+                                                        {album.cover ? (
+                                                            <img src={album.cover} alt={album.name} className={classes.album_img}
+                                                                onError={(e) => { e.target.style.display = 'none' }} />
+                                                        ) : (
+                                                            <div className={classes.album_img_placeholder}>
+                                                                <LibraryMusicIcon style={{ color: 'rgba(255,255,255,0.4)', fontSize: 40 }} />
+                                                            </div>
+                                                        )}
+                                                        <div className={classes.album_content}>
+                                                            <p className={classes.album_name}>{album.name}</p>
+                                                            <p className={classes.album_artist}>{album.artist}</p>
+                                                            {album.year && <span className={classes.album_year}>{album.year}</span>}
+                                                        </div>
+                                                    </div>
+                                                </Tooltip>
+                                            </Grid>
+                                        ))}
+                                    </Grid>
+                                    {albumSearchResults === null && (
+                                        <div className={classes.load_more_row}>
+                                            {loadingMoreAlbums
+                                                ? <CircularProgress style={{ color: '#1DB954' }} />
+                                                : !albumsExhausted
+                                                    ? <Button className={classes.load_more_btn} onClick={handleAlbumLoadMore}>Load More</Button>
+                                                    : albums.length > 0 && <span style={{ color: '#555', fontSize: 13 }}>All albums loaded</span>
+                                            }
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </>
                     )}
                 </>
             )}
@@ -633,8 +1073,8 @@ const Music = () => {
 
             {currentSong && (
                 <div className={classes.player_bar}>
-                    {getArtwork(currentSong) ? (
-                        <img src={getArtwork(currentSong)} alt="" className={classes.player_art} />
+                    {currentSong.cover ? (
+                        <img src={currentSong.cover} alt="" className={classes.player_art} />
                     ) : (
                         <div className={classes.player_art_placeholder}>
                             <MusicNoteIcon style={{ color: 'rgba(255,255,255,0.5)' }} />
@@ -642,8 +1082,8 @@ const Music = () => {
                     )}
 
                     <div className={classes.player_info}>
-                        <p className={classes.player_title}>{getTitle(currentSong)}</p>
-                        <p className={classes.player_artist}>{getArtist(currentSong)}</p>
+                        <p className={classes.player_title}>{currentSong.title}</p>
+                        <p className={classes.player_artist}>{currentSong.artist}</p>
                     </div>
 
                     <div className={classes.player_controls}>
@@ -682,7 +1122,7 @@ const Music = () => {
                             onChange={(_, v) => { setVolume(v); setMuted(false) }} style={{ color: '#1DB954' }} />
                     </div>
 
-                    <Tooltip title="Download preview">
+                    <Tooltip title="Download">
                         <IconButton size="small" className={classes.dl_btn} onClick={handleDownload} disabled={downloading}>
                             {downloading ? <CircularProgress size={18} style={{ color: '#1DB954' }} /> : <GetAppIcon fontSize="small" />}
                         </IconButton>
