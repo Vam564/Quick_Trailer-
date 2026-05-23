@@ -21,6 +21,9 @@ import GetAppIcon from '@material-ui/icons/GetApp'
 import SearchIcon from '@material-ui/icons/Search'
 import ArrowBackIcon from '@material-ui/icons/ArrowBack'
 import AllInclusiveIcon from '@material-ui/icons/AllInclusive'
+import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown'
+import FastRewindIcon from '@material-ui/icons/FastRewind'
+import FastForwardIcon from '@material-ui/icons/FastForward'
 import axios from 'axios'
 import Header from '../Header/Header'
 import { clearMusicSearch } from '../../store/actions/ListPageActionTypes'
@@ -385,6 +388,98 @@ const useStyles = makeStyles((theme) => ({
         color: '#1DB954 !important',
         background: 'rgba(29,185,84,0.1)',
     },
+    // ----- Expanded player -----
+    expanded_overlay: {
+        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1100,
+        background: 'linear-gradient(180deg, #1a1a2e 0%, #121212 60%)',
+        display: 'flex', flexDirection: 'column', overflow: 'hidden',
+    },
+    expanded_header: {
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '14px 16px 4px', flexShrink: 0,
+    },
+    expanded_header_label: {
+        fontSize: 12, fontWeight: 700, color: '#aaa',
+        textTransform: 'uppercase', letterSpacing: 1.5,
+    },
+    expanded_art_wrap: {
+        display: 'flex', justifyContent: 'center',
+        padding: '12px 32px 16px', flexShrink: 0,
+    },
+    expanded_art: {
+        width: 260, height: 260, borderRadius: 16, objectFit: 'cover',
+        boxShadow: '0 24px 64px rgba(0,0,0,0.7)',
+    },
+    expanded_art_placeholder: {
+        width: 260, height: 260, borderRadius: 16,
+        background: 'linear-gradient(135deg, #1DB954 0%, #191414 100%)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        boxShadow: '0 24px 64px rgba(0,0,0,0.7)',
+    },
+    expanded_song_section: {
+        textAlign: 'center', padding: '0 32px 10px', flexShrink: 0,
+    },
+    expanded_song_title: {
+        fontSize: 20, fontWeight: 'bold', color: '#fff', margin: '0 0 6px',
+        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+    },
+    expanded_song_artist: { fontSize: 14, color: '#aaa', margin: 0 },
+    expanded_progress: {
+        display: 'flex', alignItems: 'center', gap: 10,
+        padding: '0 24px 6px', flexShrink: 0,
+    },
+    expanded_time: { fontSize: 11, color: '#777', flexShrink: 0, minWidth: 36 },
+    expanded_controls: {
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        gap: 6, padding: '4px 24px 8px', flexShrink: 0,
+    },
+    expanded_play_btn: {
+        background: '#1DB954', color: '#fff', padding: 14,
+        '&:hover': { background: '#17a349' },
+    },
+    expanded_icon_btn: { color: '#aaa', '&:hover': { color: '#fff' } },
+    expanded_icon_active: { color: '#1DB954 !important' },
+    expanded_vol_row: {
+        display: 'flex', alignItems: 'center', gap: 8,
+        padding: '0 28px 10px', flexShrink: 0,
+    },
+    expanded_dl_btn: { color: '#aaa', '&:hover': { color: '#1DB954' } },
+    expanded_queue: {
+        flex: 1, overflowY: 'auto',
+        borderTop: '1px solid rgba(255,255,255,0.08)',
+        '&::-webkit-scrollbar': { width: 4 },
+        '&::-webkit-scrollbar-thumb': { background: 'rgba(255,255,255,0.15)', borderRadius: 2 },
+    },
+    expanded_queue_header: {
+        fontSize: 11, fontWeight: 700, color: '#aaa',
+        padding: '10px 24px 6px', textTransform: 'uppercase', letterSpacing: 1.5, margin: 0,
+    },
+    expanded_queue_row: {
+        display: 'flex', alignItems: 'center', padding: '8px 24px', cursor: 'pointer',
+        '&:hover': { background: 'rgba(255,255,255,0.05)' },
+    },
+    expanded_queue_active: { background: 'rgba(29,185,84,0.12) !important' },
+    expanded_queue_thumb: {
+        width: 40, height: 40, borderRadius: 4, objectFit: 'cover', flexShrink: 0, marginRight: 12,
+    },
+    expanded_queue_thumb_ph: {
+        width: 40, height: 40, borderRadius: 4, flexShrink: 0, marginRight: 12,
+        background: 'linear-gradient(135deg, #1DB954 0%, #191414 100%)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+    },
+    expanded_queue_info: { flex: 1, minWidth: 0 },
+    expanded_queue_title: {
+        fontSize: 13, fontWeight: 600, color: '#ddd',
+        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0,
+    },
+    expanded_queue_title_active: { color: '#1DB954 !important' },
+    expanded_queue_artist: { fontSize: 11, color: '#666', margin: '2px 0 0' },
+    expanded_queue_dur: { fontSize: 11, color: '#555', flexShrink: 0, paddingLeft: 8 },
+    mini_bar_clickable: {
+        display: 'flex', alignItems: 'center', gap: 12,
+        cursor: 'pointer', flexShrink: 0, minWidth: 0,
+        '&:hover $player_title': { color: '#1DB954' },
+    },
 }))
 
 const fmt = (secs) => {
@@ -451,11 +546,24 @@ const Music = () => {
     const [shuffle, setShuffle]           = useState(false)
     const [repeat, setRepeat]             = useState('none')
     const [downloading, setDownloading]   = useState(false)
+    const [playerExpanded, setPlayerExpanded] = useState(false)
+
+    const openExpanded = () => {
+        setPlayerExpanded(true)
+        setTimeout(() => {
+            if (expandedOverlayRef.current) {
+                expandedOverlayRef.current.style.transform = ''
+                expandedOverlayRef.current.style.transition = ''
+            }
+        }, 0)
+    }
 
     const audioRef            = useRef(null)
     const searchTimerRef      = useRef(null)
     const albumSearchTimerRef = useRef(null)
     const loaderRef           = useRef(null)
+    const expandedOverlayRef  = useRef(null)
+    const swipeTouchStartY    = useRef(0)
 
     // Songs shown in the Songs tab grid
     const displaySongs = musicSearchFlag
@@ -465,7 +573,7 @@ const Music = () => {
             : songs
 
     // Queue the player's skip next/prev navigates through
-    const playQueue = (activeTab === 'albums' && selectedAlbum && albumSongs.length > 0)
+    const playQueue = (activeTab === 'albums' && selectedAlbum)
         ? albumSongs
         : displaySongs
 
@@ -657,6 +765,20 @@ const Music = () => {
         setAlbumSongs([])
     }
 
+    const handlePrevAlbum = () => {
+        if (!selectedAlbum || albums.length < 2) return
+        const idx = albums.findIndex(a => a.id === selectedAlbum.id)
+        const prevIdx = (idx - 1 + albums.length) % albums.length
+        loadAndPlayAlbum(albums[prevIdx])
+    }
+
+    const handleNextAlbum = () => {
+        if (!selectedAlbum || albums.length < 2) return
+        const idx = albums.findIndex(a => a.id === selectedAlbum.id)
+        const nextIdx = (idx + 1) % albums.length
+        loadAndPlayAlbum(albums[nextIdx])
+    }
+
     // Auto-advances to the next album in the list and plays its first song
     const loadAndPlayAlbum = async (album) => {
         setAutoLoadingAlbum(true)
@@ -747,6 +869,31 @@ const Music = () => {
             document.body.appendChild(a); a.click(); document.body.removeChild(a)
         } catch (e) { console.log(e) }
         finally { setDownloading(false) }
+    }
+
+    const handleSwipeStart = (e) => {
+        swipeTouchStartY.current = e.touches[0].clientY
+        if (expandedOverlayRef.current) expandedOverlayRef.current.style.transition = 'none'
+    }
+
+    const handleSwipeMove = (e) => {
+        const delta = e.touches[0].clientY - swipeTouchStartY.current
+        if (delta > 0 && expandedOverlayRef.current) {
+            expandedOverlayRef.current.style.transform = `translateY(${delta}px)`
+        }
+    }
+
+    const handleSwipeEnd = (e) => {
+        const delta = e.changedTouches[0].clientY - swipeTouchStartY.current
+        if (!expandedOverlayRef.current) return
+        if (delta > 80) {
+            expandedOverlayRef.current.style.transition = 'transform 0.25s ease'
+            expandedOverlayRef.current.style.transform = 'translateY(100%)'
+            setTimeout(() => setPlayerExpanded(false), 250)
+        } else {
+            expandedOverlayRef.current.style.transition = 'transform 0.25s ease'
+            expandedOverlayRef.current.style.transform = 'translateY(0)'
+        }
     }
 
     return (
@@ -1071,19 +1218,139 @@ const Music = () => {
                 onEnded={handleEnded}
             />
 
-            {currentSong && (
-                <div className={classes.player_bar}>
-                    {currentSong.cover ? (
-                        <img src={currentSong.cover} alt="" className={classes.player_art} />
-                    ) : (
-                        <div className={classes.player_art_placeholder}>
-                            <MusicNoteIcon style={{ color: 'rgba(255,255,255,0.5)' }} />
+            {/* ===== EXPANDED PLAYER ===== */}
+            {currentSong && playerExpanded && (
+                <div
+                    className={classes.expanded_overlay}
+                    ref={expandedOverlayRef}
+                    onTouchStart={handleSwipeStart}
+                    onTouchMove={handleSwipeMove}
+                    onTouchEnd={handleSwipeEnd}
+                >
+                    <div className={classes.expanded_header}>
+                        <IconButton className={classes.expanded_icon_btn} onClick={() => setPlayerExpanded(false)}>
+                            <KeyboardArrowDownIcon />
+                        </IconButton>
+                        <span className={classes.expanded_header_label}>Now Playing</span>
+                        <Tooltip title="Download">
+                            <IconButton size="small" className={classes.expanded_dl_btn} onClick={handleDownload} disabled={downloading}>
+                                {downloading ? <CircularProgress size={18} style={{ color: '#1DB954' }} /> : <GetAppIcon fontSize="small" />}
+                            </IconButton>
+                        </Tooltip>
+                    </div>
+
+                    <div className={classes.expanded_art_wrap}>
+                        {currentSong.cover ? (
+                            <img src={currentSong.cover} alt={currentSong.title} className={classes.expanded_art} />
+                        ) : (
+                            <div className={classes.expanded_art_placeholder}>
+                                <MusicNoteIcon style={{ color: 'rgba(255,255,255,0.4)', fontSize: 72 }} />
+                            </div>
+                        )}
+                    </div>
+
+                    <div className={classes.expanded_song_section}>
+                        <p className={classes.expanded_song_title}>{currentSong.title}</p>
+                        <p className={classes.expanded_song_artist}>{currentSong.artist}</p>
+                    </div>
+
+                    <div className={classes.expanded_progress}>
+                        <span className={classes.expanded_time}>{fmt(currentTime)}</span>
+                        <Slider min={0} max={duration || 1} value={currentTime} onChange={handleSeek}
+                            style={{ color: '#1DB954', flex: 1 }} />
+                        <span className={classes.expanded_time}>{fmt(duration)}</span>
+                    </div>
+
+                    <div className={classes.expanded_controls}>
+                        {activeTab === 'albums' && selectedAlbum && albums.length > 1 && (
+                            <Tooltip title="Previous album">
+                                <IconButton className={classes.expanded_icon_btn} onClick={handlePrevAlbum}>
+                                    <FastRewindIcon />
+                                </IconButton>
+                            </Tooltip>
+                        )}
+                        <Tooltip title={shuffle ? 'Shuffle On' : 'Shuffle Off'}>
+                            <IconButton className={`${classes.expanded_icon_btn} ${shuffle ? classes.expanded_icon_active : ''}`} onClick={() => setShuffle(s => !s)}>
+                                <ShuffleIcon />
+                            </IconButton>
+                        </Tooltip>
+                        <IconButton className={classes.expanded_icon_btn} onClick={skipPrev}>
+                            <SkipPreviousIcon style={{ fontSize: 36 }} />
+                        </IconButton>
+                        <IconButton className={classes.expanded_play_btn} onClick={togglePlay}>
+                            {isPlaying ? <PauseIcon style={{ fontSize: 32 }} /> : <PlayArrowIcon style={{ fontSize: 32 }} />}
+                        </IconButton>
+                        <IconButton className={classes.expanded_icon_btn} onClick={skipNext}>
+                            <SkipNextIcon style={{ fontSize: 36 }} />
+                        </IconButton>
+                        <Tooltip title={repeat === 'none' ? 'Repeat Off' : repeat === 'all' ? 'Repeat All' : 'Repeat One'}>
+                            <IconButton className={`${classes.expanded_icon_btn} ${repeat !== 'none' ? classes.expanded_icon_active : ''}`} onClick={cycleRepeat}>
+                                {repeat === 'one' ? <RepeatOneIcon /> : <RepeatIcon />}
+                            </IconButton>
+                        </Tooltip>
+                        {activeTab === 'albums' && selectedAlbum && albums.length > 1 && (
+                            <Tooltip title="Next album">
+                                <IconButton className={classes.expanded_icon_btn} onClick={handleNextAlbum}>
+                                    <FastForwardIcon />
+                                </IconButton>
+                            </Tooltip>
+                        )}
+                    </div>
+
+                    <div className={classes.expanded_vol_row}>
+                        <IconButton size="small" className={classes.expanded_icon_btn} onClick={() => setMuted(m => !m)}>
+                            {muted ? <VolumeOffIcon fontSize="small" /> : <VolumeUpIcon fontSize="small" />}
+                        </IconButton>
+                        <Slider min={0} max={1} step={0.01} value={muted ? 0 : volume}
+                            onChange={(_, v) => { setVolume(v); setMuted(false) }}
+                            style={{ color: '#1DB954', flex: 1 }} />
+                    </div>
+
+                    {playQueue.length > 0 && (
+                        <div className={classes.expanded_queue}>
+                            <p className={classes.expanded_queue_header}>Up Next</p>
+                            {playQueue.map((song, i) => (
+                                <div
+                                    key={`${song.id}-${i}`}
+                                    className={`${classes.expanded_queue_row} ${currentSong === song ? classes.expanded_queue_active : ''}`}
+                                    onClick={() => playSong(song, i)}
+                                >
+                                    {song.cover ? (
+                                        <img src={song.cover} alt={song.title} className={classes.expanded_queue_thumb}
+                                            onError={(e) => { e.target.style.display = 'none' }} />
+                                    ) : (
+                                        <div className={classes.expanded_queue_thumb_ph}>
+                                            <MusicNoteIcon style={{ color: 'rgba(255,255,255,0.5)', fontSize: 18 }} />
+                                        </div>
+                                    )}
+                                    <div className={classes.expanded_queue_info}>
+                                        <p className={`${classes.expanded_queue_title} ${currentSong === song ? classes.expanded_queue_title_active : ''}`}>
+                                            {song.title}
+                                        </p>
+                                        <p className={classes.expanded_queue_artist}>{song.artist}</p>
+                                    </div>
+                                    <span className={classes.expanded_queue_dur}>{fmt(song.duration)}</span>
+                                </div>
+                            ))}
                         </div>
                     )}
+                </div>
+            )}
 
-                    <div className={classes.player_info}>
-                        <p className={classes.player_title}>{currentSong.title}</p>
-                        <p className={classes.player_artist}>{currentSong.artist}</p>
+            {currentSong && (
+                <div className={classes.player_bar}>
+                    <div className={classes.mini_bar_clickable} onClick={openExpanded}>
+                        {currentSong.cover ? (
+                            <img src={currentSong.cover} alt="" className={classes.player_art} />
+                        ) : (
+                            <div className={classes.player_art_placeholder}>
+                                <MusicNoteIcon style={{ color: 'rgba(255,255,255,0.5)' }} />
+                            </div>
+                        )}
+                        <div className={classes.player_info}>
+                            <p className={classes.player_title}>{currentSong.title}</p>
+                            <p className={classes.player_artist}>{currentSong.artist}</p>
+                        </div>
                     </div>
 
                     <div className={classes.player_controls}>
