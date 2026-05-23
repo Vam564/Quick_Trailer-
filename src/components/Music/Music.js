@@ -20,72 +20,79 @@ import GetAppIcon from '@material-ui/icons/GetApp'
 import SearchIcon from '@material-ui/icons/Search'
 import axios from 'axios'
 import Header from '../Header/Header'
-import { setMusicSource, clearMusicSearch } from '../../store/actions/ListPageActionTypes'
+import { clearMusicSearch } from '../../store/actions/ListPageActionTypes'
 
-const SPOTIFY_BASE = 'https://spotify.4texasplayz4.workers.dev'
-const SC_BASE      = 'https://0.4texasplayz4.workers.dev'
+const SAAVN_BASE = 'https://jiosavan-api2.vercel.app/api'
 
-// Each category has multiple query variants. Load More cycles through them.
+const mapTrack = (t) => ({
+    id: t.id,
+    title: t.name || '',
+    artist: t.artists?.primary?.map(a => a.name).join(', ') || '',
+    cover: t.image?.[2]?.url || t.image?.[1]?.url || '',
+    previewUrl: t.downloadUrl?.[4]?.url || t.downloadUrl?.[3]?.url || t.downloadUrl?.[2]?.url || '',
+})
+
 const CATEGORIES = [
     { label: '🔥 Top Hits', queries: [
-        'top hits 2024', 'global top 50 2024', 'best songs 2024',
-        'billboard hot 100 2024', 'popular music 2024', 'viral hits 2024',
+        'top hits', 'billboard hot 100', 'best songs',
+        'chart toppers', 'popular music', 'viral hits',
     ]},
     { label: '📈 Trending', queries: [
-        'trending music 2024', 'trending songs this week', 'new music friday 2024',
-        'viral songs 2024', 'tiktok hits 2024', 'trending pop 2024',
+        'trending music', 'new music friday', 'viral songs',
+        'tiktok hits', 'trending pop', 'this week hits',
     ]},
     { label: '🎬 Telugu', queries: [
-        'latest telugu hits 2024', 'telugu melody songs', 'telugu mass songs 2024',
-        'telugu love songs', 'telugu old songs hits', 'telugu album songs 2024',
-        'telugu folk songs', 'telugu beats 2024', 'allu arjun songs',
-        'pawan kalyan songs', 'telugu sad songs', 'telugu nonstop hits',
+        'thaman s', 'devi sri prasad', 'allu arjun',
+        'mahesh babu songs', 'prabhas songs', 'pawan kalyan songs',
+        'sid sriram telugu', 'anirudh telugu', 'ss thaman',
+        'manisharma songs', 'mm keeravaani', 'telugu melody',
     ]},
     { label: '🎪 Bollywood', queries: [
-        'bollywood hits 2024', 'bollywood romantic songs', 'bollywood party songs',
-        'hindi songs 2024', 'bollywood old songs', 'bollywood dance songs',
-        'arijit singh songs', 'bollywood melody 2024', 'hindi album songs',
-        'bollywood sad songs', 'bollywood item songs', 'bollywood nonstop mix',
+        'arijit singh', 'atif aslam', 'shreya ghoshal',
+        'sonu nigam songs', 'lata mangeshkar', 'kumar sanu',
+        'kishore kumar', 'mohd rafi', 'neha kakkar',
+        'yo yo honey singh', 'pritam songs', 'vishal shekhar',
     ]},
     { label: '🎭 Tamil', queries: [
-        'tamil hits 2024', 'tamil melody songs', 'tamil mass songs',
-        'tamil love songs', 'tamil old hits', 'vijay songs',
-        'anirudh songs', 'tamil album 2024', 'tamil kuthu songs',
+        'anirudh ravichander', 'harris jayaraj', 'ar rahman tamil',
+        'ilaiyaraaja', 'g v prakash kumar', 'd imman',
+        'sid sriram', 'yuvan shankar raja', 'vijay songs',
+        'ajith kumar songs', 'dhanush songs', 'sivakarthikeyan songs',
     ]},
     { label: '🎤 Hip Hop', queries: [
-        'hip hop hits 2024', 'rap songs 2024', 'trap music 2024',
-        'drake songs', 'kendrick lamar songs', 'hip hop old school',
-        'r&b hip hop mix', 'rap god songs', 'hip hop playlist 2024',
+        'drake', 'kendrick lamar', 'j cole songs',
+        'travis scott', 'post malone', 'cardi b',
+        'nicki minaj', 'eminem', 'rap hits',
     ]},
     { label: '🌟 Pop', queries: [
-        'pop hits 2024', 'pop songs 2024', 'taylor swift songs',
-        'ed sheeran songs', 'dua lipa songs', 'the weeknd songs',
-        'ariana grande songs', 'pop music chart 2024', 'best pop 2024',
+        'taylor swift', 'ed sheeran', 'dua lipa',
+        'the weeknd', 'ariana grande', 'harry styles',
+        'billie eilish', 'olivia rodrigo', 'sabrina carpenter',
     ]},
     { label: '🎸 Rock', queries: [
-        'rock hits', 'classic rock songs', 'rock music 2024',
-        'linkin park songs', 'imagine dragons songs', 'rock anthem',
-        'alternative rock', 'hard rock hits', 'rock ballads',
+        'linkin park', 'imagine dragons', 'coldplay',
+        'green day', 'metallica', 'ac dc',
+        'led zeppelin', 'queen songs', 'foo fighters',
     ]},
     { label: '💕 Romantic', queries: [
-        'romantic songs 2024', 'love songs playlist', 'romantic hindi songs',
-        'romantic telugu songs', 'romantic english songs', 'wedding songs',
-        'slow love songs', 'romantic melody 2024', 'best romantic hits',
+        'arijit singh romantic', 'shreya ghoshal love songs', 'sid sriram love',
+        'romantic hindi songs', 'telugu love songs', 'adele songs',
+        'ed sheeran love', 'john legend', 'romantic melody',
     ]},
     { label: '🎉 Party Mix', queries: [
-        'party mix hits', 'dance party songs 2024', 'edm party hits',
-        'club hits 2024', 'party anthems', 'dance floor hits',
-        'dj mix 2024', 'party nonstop songs', 'festival hits 2024',
+        'dance party hits', 'edm party', 'club hits',
+        'david guetta', 'calvin harris', 'martin garrix',
+        'party anthems', 'dj snake', 'zedd songs',
     ]},
     { label: '😴 Chill', queries: [
-        'chill lofi music', 'lofi hip hop beats', 'chill songs 2024',
-        'relaxing music playlist', 'study music lofi', 'ambient chill',
-        'chillout songs', 'lofi chill beats', 'calm music playlist',
+        'lofi hip hop', 'chill songs', 'relaxing music',
+        'study music', 'ambient music', 'chillout',
+        'coffee shop music', 'peaceful songs', 'calm music',
     ]},
     { label: '🌍 K-Pop', queries: [
-        'kpop hits 2024', 'bts songs', 'blackpink songs',
-        'kpop girl group 2024', 'kpop boy band hits', 'stray kids songs',
-        'twice songs', 'exo songs', 'kpop playlist 2024',
+        'bts', 'blackpink', 'stray kids',
+        'twice', 'exo songs', 'nct 127',
+        'aespa', 'ive kpop', 'newjeans',
     ]},
 ]
 
@@ -99,8 +106,6 @@ const useStyles = makeStyles((theme) => ({
     top_bar: {
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
         padding: '16px 24px 8px',
     },
     page_title: {
@@ -110,22 +115,6 @@ const useStyles = makeStyles((theme) => ({
         margin: 0,
         fontSize: 22,
     },
-    source_toggle: {
-        display: 'flex',
-        gap: 8,
-        alignItems: 'center',
-    },
-    source_btn: {
-        padding: '6px 18px',
-        borderRadius: 20,
-        border: 'none',
-        cursor: 'pointer',
-        fontWeight: 'bold',
-        fontSize: 12,
-        transition: 'all 0.2s',
-    },
-    source_active: { background: '#1DB954', color: '#fff' },
-    source_inactive: { background: '#e0e0e0', color: '#555' },
     search_bar: {
         display: 'flex',
         alignItems: 'center',
@@ -255,7 +244,6 @@ const useStyles = makeStyles((theme) => ({
         '&:hover': { background: '#d0d0d0' },
         '&:disabled': { color: '#aaa' },
     },
-    // ---- Bottom player ----
     player_bar: {
         position: 'fixed',
         bottom: 0, left: 0, right: 0,
@@ -301,10 +289,6 @@ const useStyles = makeStyles((theme) => ({
         display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, width: 120,
         [theme.breakpoints.down('sm')]: { display: 'none' },
     },
-    loading_text: {
-        fontSize: 12, color: '#1DB954', padding: '0 10px',
-        display: 'flex', alignItems: 'center', gap: 6,
-    },
     dl_btn: { color: '#9b9b9b', flexShrink: 0, '&:hover': { color: '#1DB954' } },
 }))
 
@@ -318,7 +302,7 @@ const fmt = (secs) => {
 const dedup = (arr) => {
     const seen = new Set()
     return arr.filter((s) => {
-        const key = s.id || s.url || s.title
+        const key = s.id || s.title
         if (seen.has(key)) return false
         seen.add(key)
         return true
@@ -328,33 +312,32 @@ const dedup = (arr) => {
 const Music = () => {
     const classes = useStyles()
     const dispatch = useDispatch()
-    const { musicSearchData, musicSearchFlag, musicSource, searchValue } = useSelector(s => s.ListPageReducer)
+    const { musicSearchData, musicSearchFlag, searchValue } = useSelector(s => s.ListPageReducer)
 
     const [songs, setSongs]                             = useState([])
     const [loadingCat, setLoadingCat]                   = useState(false)
     const [loadingMore, setLoadingMore]                 = useState(false)
     const [currentCategory, setCurrentCategory]         = useState(CATEGORIES[0])
-    const [queryIndex, setQueryIndex]                   = useState(0)  // which sub-query we're on
+    const [queryIndex, setQueryIndex]                   = useState(0)
     const [localSearch, setLocalSearch]                 = useState('')
     const [localSearchResults, setLocalSearchResults]   = useState(null)
     const [localSearchLoading, setLocalSearchLoading]   = useState(false)
 
-    const [currentSong, setCurrentSong]     = useState(null)
-    const [currentIndex, setCurrentIndex]   = useState(-1)
-    const [isPlaying, setIsPlaying]         = useState(false)
-    const [streamUrl, setStreamUrl]         = useState('')
-    const [loadingStream, setLoadingStream] = useState(false)
-    const [duration, setDuration]           = useState(0)
-    const [currentTime, setCurrentTime]     = useState(0)
-    const [volume, setVolume]               = useState(0.8)
-    const [muted, setMuted]                 = useState(false)
-    const [shuffle, setShuffle]             = useState(false)
-    const [repeat, setRepeat]               = useState('none')
-    const [downloading, setDownloading]     = useState(false)
+    const [currentSong, setCurrentSong]   = useState(null)
+    const [currentIndex, setCurrentIndex] = useState(-1)
+    const [isPlaying, setIsPlaying]       = useState(false)
+    const [streamUrl, setStreamUrl]       = useState('')
+    const [duration, setDuration]         = useState(0)
+    const [currentTime, setCurrentTime]   = useState(0)
+    const [volume, setVolume]             = useState(0.8)
+    const [muted, setMuted]               = useState(false)
+    const [shuffle, setShuffle]           = useState(false)
+    const [repeat, setRepeat]             = useState('none')
+    const [downloading, setDownloading]   = useState(false)
 
     const audioRef       = useRef(null)
     const searchTimerRef = useRef(null)
-    const loaderRef      = useRef(null)   // sentinel div for intersection observer
+    const loaderRef      = useRef(null)
 
     const displaySongs = musicSearchFlag
         ? musicSearchData
@@ -370,51 +353,34 @@ const Music = () => {
 
     const hasMoreQueries = queryIndex + 1 < currentCategory.queries.length
 
-    const fetchQuery = useCallback((query, source, append = false) => {
-        const base = source === 'spotify' ? SPOTIFY_BASE : SC_BASE
-        return axios.get(`${base}/s/${encodeURIComponent(query)}`)
-            .then((res) => {
-                const data = source === 'spotify' ? (res.data || []) : (res.data?.results || [])
-                if (append) {
-                    setSongs(prev => dedup([...prev, ...data]))
-                } else {
-                    setSongs(dedup(data))
-                }
-                return data
-            })
+    const fetchQuery = useCallback((query, append = false) => {
+        return axios.get(`${SAAVN_BASE}/search/songs`, {
+            params: { query, limit: 50 }
+        })
+        .then((res) => {
+            const data = (res.data?.data?.results || []).map(mapTrack)
+            if (append) setSongs(prev => dedup([...prev, ...data]))
+            else setSongs(dedup(data))
+            return data
+        })
     }, [])
 
-    // Initial load
     useEffect(() => {
         setLoadingCat(true)
-        fetchQuery(CATEGORIES[0].queries[0], musicSource)
+        fetchQuery(CATEGORIES[0].queries[0])
             .catch(e => console.log(e))
             .finally(() => setLoadingCat(false))
         // eslint-disable-next-line
     }, [])
 
-    // Reload when source changes
-    useEffect(() => {
-        if (musicSearchFlag || localSearchResults !== null) return
-        setLoadingCat(true)
-        setQueryIndex(0)
-        fetchQuery(currentCategory.queries[0], musicSource)
-            .catch(e => console.log(e))
-            .finally(() => setLoadingCat(false))
-        // eslint-disable-next-line
-    }, [musicSource])
-
-    // Sync volume
     useEffect(() => {
         if (audioRef.current) audioRef.current.volume = muted ? 0 : volume
     }, [volume, muted])
 
-    // Clear local search when header search fires
     useEffect(() => {
         if (musicSearchFlag) { setLocalSearch(''); setLocalSearchResults(null) }
     }, [musicSearchFlag])
 
-    // Infinite scroll: observe sentinel div
     useEffect(() => {
         if (!loaderRef.current) return
         const obs = new IntersectionObserver(
@@ -436,7 +402,7 @@ const Music = () => {
         if (nextIdx >= currentCategory.queries.length) return
         setLoadingMore(true)
         setQueryIndex(nextIdx)
-        fetchQuery(currentCategory.queries[nextIdx], musicSource, true)
+        fetchQuery(currentCategory.queries[nextIdx], true)
             .catch(e => console.log(e))
             .finally(() => setLoadingMore(false))
     }
@@ -448,7 +414,7 @@ const Music = () => {
         setLocalSearchResults(null)
         if (musicSearchFlag) dispatch(clearMusicSearch())
         setLoadingCat(true)
-        fetchQuery(cat.queries[0], musicSource)
+        fetchQuery(cat.queries[0])
             .catch(e => console.log(e))
             .finally(() => setLoadingCat(false))
     }
@@ -460,38 +426,29 @@ const Music = () => {
         if (!value.trim()) { setLocalSearchResults(null); return }
         setLocalSearchLoading(true)
         searchTimerRef.current = setTimeout(() => {
-            const base = musicSource === 'spotify' ? SPOTIFY_BASE : SC_BASE
-            axios.get(`${base}/s/${encodeURIComponent(value)}`)
-                .then((res) => {
-                    const data = musicSource === 'spotify' ? (res.data || []) : (res.data?.results || [])
-                    setLocalSearchResults(data)
-                })
-                .catch(e => console.log(e))
-                .finally(() => setLocalSearchLoading(false))
+            axios.get(`${SAAVN_BASE}/search/songs`, {
+                params: { query: value, limit: 50 }
+            })
+            .then((res) => {
+                const data = (res.data?.data?.results || []).map(mapTrack)
+                setLocalSearchResults(data)
+            })
+            .catch(e => console.log(e))
+            .finally(() => setLocalSearchLoading(false))
         }, 500)
     }
 
-    const getSpotifyStream = (song) => setStreamUrl(`${SPOTIFY_BASE}/d/${song.id}`)
-
-    const getSoundCloudStream = async (song) => {
-        const parts = song.url?.replace(/\/$/, '').split('/')
-        const userSlug  = parts?.[parts.length - 2]
-        const trackSlug = parts?.[parts.length - 1]
-        if (!userSlug || !trackSlug) return
-        const res = await axios.get(`${SC_BASE}/d/${userSlug}/${trackSlug}`)
-        setStreamUrl(res.data?.streamUrl || '')
+    const togglePlay = () => {
+        if (!audioRef.current) return
+        if (isPlaying) { audioRef.current.pause(); setIsPlaying(false) }
+        else audioRef.current.play().then(() => setIsPlaying(true)).catch(() => {})
     }
 
-    const playSong = async (song, index) => {
+    const playSong = (song, index) => {
+        if (currentSong === song) { togglePlay(); return }
         setCurrentSong(song)
         setCurrentIndex(index)
-        setLoadingStream(true)
-        setStreamUrl('')
-        try {
-            if (musicSource === 'spotify') getSpotifyStream(song)
-            else await getSoundCloudStream(song)
-        } catch (e) { console.log(e) }
-        finally { setLoadingStream(false) }
+        setStreamUrl(song.previewUrl || '')
     }
 
     useEffect(() => {
@@ -500,12 +457,6 @@ const Music = () => {
         audioRef.current.load()
         audioRef.current.play().then(() => setIsPlaying(true)).catch(() => {})
     }, [streamUrl])
-
-    const togglePlay = () => {
-        if (!audioRef.current) return
-        if (isPlaying) { audioRef.current.pause(); setIsPlaying(false) }
-        else audioRef.current.play().then(() => setIsPlaying(true)).catch(() => {})
-    }
 
     const getNextIndex = () => {
         if (shuffle) {
@@ -543,35 +494,21 @@ const Music = () => {
         if (audioRef.current) { audioRef.current.currentTime = val; setCurrentTime(val) }
     }
 
-    const handleSourceChange = (src) => {
-        dispatch(setMusicSource(src))
-        setCurrentSong(null); setStreamUrl(''); setIsPlaying(false)
-        setLocalSearchResults(null); setLocalSearch('')
-    }
-
     const handleDownload = async () => {
         if (!currentSong || downloading) return
         setDownloading(true)
         try {
-            let url = streamUrl
-            if (!url) {
-                if (musicSource === 'spotify') url = `${SPOTIFY_BASE}/d/${currentSong.id}`
-                else {
-                    const parts = currentSong.url?.replace(/\/$/, '').split('/')
-                    const res = await axios.get(`${SC_BASE}/d/${parts?.[parts.length - 2]}/${parts?.[parts.length - 1]}`)
-                    url = res.data?.streamUrl || ''
-                }
-            }
+            const url = currentSong.previewUrl || ''
             if (!url) return
             const a = document.createElement('a')
-            a.href = url; a.download = `${getTitle(currentSong)}.mp3`
+            a.href = url; a.download = `${currentSong.title || 'song'}.mp3`
             a.target = '_blank'; a.rel = 'noopener noreferrer'
             document.body.appendChild(a); a.click(); document.body.removeChild(a)
         } catch (e) { console.log(e) }
         finally { setDownloading(false) }
     }
 
-    const getArtwork = (song) => song.cover || song.artwork || ''
+    const getArtwork = (song) => song.cover || ''
     const getTitle   = (song) => song.title || ''
     const getArtist  = (song) => song.artist || ''
 
@@ -581,19 +518,8 @@ const Music = () => {
 
             <div className={classes.top_bar}>
                 <h1 className={classes.page_title}>Music</h1>
-                <div className={classes.source_toggle}>
-                    {['spotify', 'soundcloud'].map(src => (
-                        <button key={src}
-                            className={`${classes.source_btn} ${musicSource === src ? classes.source_active : classes.source_inactive}`}
-                            onClick={() => handleSourceChange(src)}
-                        >
-                            {src === 'spotify' ? 'Spotify' : 'SoundCloud'}
-                        </button>
-                    ))}
-                </div>
             </div>
 
-            {/* In-page search */}
             <div className={classes.search_bar}>
                 <SearchIcon className={classes.search_icon_color} />
                 <InputBase
@@ -606,7 +532,6 @@ const Music = () => {
                 {localSearchLoading && <CircularProgress size={16} style={{ color: '#1DB954' }} />}
             </div>
 
-            {/* Category chips */}
             {!musicSearchFlag && (
                 <div className={classes.categories_row}>
                     {CATEGORIES.map((cat) => (
@@ -640,7 +565,7 @@ const Music = () => {
                             </div>
                         ) : (
                             displaySongs.map((song, i) => (
-                                <Grid item key={`${song.id || song.url}-${i}`}>
+                                <Grid item key={`${song.id}-${i}`}>
                                     <Tooltip title={getTitle(song)} placement="top">
                                         <Card
                                             className={`${classes.card} ${currentSong === song ? classes.card_active : ''}`}
@@ -680,7 +605,6 @@ const Music = () => {
                         )}
                     </Grid>
 
-                    {/* Infinite scroll sentinel + manual Load More button */}
                     {!musicSearchFlag && localSearchResults === null && (
                         <div ref={loaderRef} className={classes.load_more_row}>
                             {loadingMore
@@ -731,7 +655,7 @@ const Music = () => {
                         <IconButton size="small" className={classes.icon_btn} onClick={skipPrev}>
                             <SkipPreviousIcon />
                         </IconButton>
-                        <IconButton size="small" className={classes.play_btn} onClick={togglePlay} disabled={loadingStream}>
+                        <IconButton size="small" className={classes.play_btn} onClick={togglePlay}>
                             {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
                         </IconButton>
                         <IconButton size="small" className={classes.icon_btn} onClick={skipNext}>
@@ -744,17 +668,11 @@ const Music = () => {
                         </Tooltip>
                     </div>
 
-                    {loadingStream ? (
-                        <span className={classes.loading_text}>
-                            <CircularProgress size={14} style={{ color: '#1DB954' }} /> Loading…
-                        </span>
-                    ) : (
-                        <div className={classes.player_progress}>
-                            <span className={classes.time_label}>{fmt(currentTime)}</span>
-                            <Slider min={0} max={duration || 1} value={currentTime} onChange={handleSeek} style={{ color: '#1DB954' }} />
-                            <span className={classes.time_label}>{fmt(duration)}</span>
-                        </div>
-                    )}
+                    <div className={classes.player_progress}>
+                        <span className={classes.time_label}>{fmt(currentTime)}</span>
+                        <Slider min={0} max={duration || 1} value={currentTime} onChange={handleSeek} style={{ color: '#1DB954' }} />
+                        <span className={classes.time_label}>{fmt(duration)}</span>
+                    </div>
 
                     <div className={classes.volume_section}>
                         <IconButton size="small" className={classes.icon_btn} onClick={() => setMuted(m => !m)}>
@@ -764,7 +682,7 @@ const Music = () => {
                             onChange={(_, v) => { setVolume(v); setMuted(false) }} style={{ color: '#1DB954' }} />
                     </div>
 
-                    <Tooltip title="Download song">
+                    <Tooltip title="Download preview">
                         <IconButton size="small" className={classes.dl_btn} onClick={handleDownload} disabled={downloading}>
                             {downloading ? <CircularProgress size={18} style={{ color: '#1DB954' }} /> : <GetAppIcon fontSize="small" />}
                         </IconButton>

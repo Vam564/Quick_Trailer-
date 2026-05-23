@@ -198,8 +198,19 @@ const Header = () => {
                         .catch((err) => console.log(err));
                 } else if (path === '/music') {
                     dispatch(setSearchValue(value));
-                    axios.get(`https://spotify.4texasplayz4.workers.dev/s/${encodeURIComponent(value)}`)
-                        .then((res) => dispatch(setMusicSearchData(res.data)))
+                    axios.get('https://jiosavan-api2.vercel.app/api/search/songs', {
+                        params: { query: value, limit: 50 }
+                    })
+                        .then((res) => {
+                            const data = (res.data?.data?.results || []).map(t => ({
+                                id: t.id,
+                                title: t.name || '',
+                                artist: t.artists?.primary?.map(a => a.name).join(', ') || '',
+                                cover: t.image?.[2]?.url || t.image?.[1]?.url || '',
+                                previewUrl: t.downloadUrl?.[4]?.url || t.downloadUrl?.[3]?.url || t.downloadUrl?.[2]?.url || '',
+                            }))
+                            dispatch(setMusicSearchData(data))
+                        })
                         .catch((err) => console.log(err));
                 } else {
                     dispatch(setSearchValue(value));
