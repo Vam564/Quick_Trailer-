@@ -564,6 +564,7 @@ const Music = () => {
     const loaderRef           = useRef(null)
     const expandedOverlayRef  = useRef(null)
     const swipeTouchStartY    = useRef(0)
+    const mediaActionRef      = useRef({})
 
     // Songs shown in the Songs tab grid
     const displaySongs = musicSearchFlag
@@ -629,6 +630,59 @@ const Music = () => {
         return () => obs.disconnect()
         // eslint-disable-next-line
     }, [loadingMore, loadingCat, hasMoreQueries, musicSearchFlag, localSearchResults, queryIndex])
+
+    // ---- Media Session API (background audio + lock screen controls) ----
+
+    // Keep latest action functions in a ref so handlers registered once always call fresh logic
+    useEffect(() => {
+        mediaActionRef.current.skipNext = skipNext
+        mediaActionRef.current.skipPrev = skipPrev
+    })
+
+    // Register handlers once on mount
+    useEffect(() => {
+        if (!('mediaSession' in navigator)) return
+        navigator.mediaSession.setActionHandler('play', () => {
+            audioRef.current?.play().then(() => setIsPlaying(true)).catch(() => {})
+        })
+        navigator.mediaSession.setActionHandler('pause', () => {
+            audioRef.current?.pause(); setIsPlaying(false)
+        })
+        navigator.mediaSession.setActionHandler('nexttrack', () => mediaActionRef.current.skipNext?.())
+        navigator.mediaSession.setActionHandler('previoustrack', () => mediaActionRef.current.skipPrev?.())
+        navigator.mediaSession.setActionHandler('seekforward', (d) => {
+            if (audioRef.current)
+                audioRef.current.currentTime = Math.min(audioRef.current.duration || 0, audioRef.current.currentTime + (d.seekOffset || 10))
+        })
+        navigator.mediaSession.setActionHandler('seekbackward', (d) => {
+            if (audioRef.current)
+                audioRef.current.currentTime = Math.max(0, audioRef.current.currentTime - (d.seekOffset || 10))
+        })
+        return () => {
+            ['play', 'pause', 'nexttrack', 'previoustrack', 'seekforward', 'seekbackward'].forEach(action => {
+                try { navigator.mediaSession.setActionHandler(action, null) } catch (_) {}
+            })
+        }
+    // eslint-disable-next-line
+    }, [])
+
+    // Update lock screen metadata whenever the current song changes
+    useEffect(() => {
+        if (!('mediaSession' in navigator) || !currentSong) return
+        navigator.mediaSession.metadata = new window.MediaMetadata({
+            title: currentSong.title || '',
+            artist: currentSong.artist || '',
+            artwork: currentSong.cover
+                ? [{ src: currentSong.cover, sizes: '512x512', type: 'image/jpeg' }]
+                : [],
+        })
+    }, [currentSong])
+
+    // Keep the lock screen play/pause indicator in sync
+    useEffect(() => {
+        if (!('mediaSession' in navigator)) return
+        navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused'
+    }, [isPlaying])
 
     // ---- Albums tab fetching ----
     const dedupAlbums = (arr) => {
