@@ -639,7 +639,7 @@ const Music = () => {
         mediaActionRef.current.skipPrev = skipPrev
     })
 
-    // Register handlers once on mount
+    // Register play/pause/seek handlers once on mount — these don't depend on song state
     useEffect(() => {
         if (!('mediaSession' in navigator)) return
         navigator.mediaSession.setActionHandler('play', () => {
@@ -648,8 +648,6 @@ const Music = () => {
         navigator.mediaSession.setActionHandler('pause', () => {
             audioRef.current?.pause(); setIsPlaying(false)
         })
-        navigator.mediaSession.setActionHandler('nexttrack', () => mediaActionRef.current.skipNext?.())
-        navigator.mediaSession.setActionHandler('previoustrack', () => mediaActionRef.current.skipPrev?.())
         navigator.mediaSession.setActionHandler('seekforward', (d) => {
             if (audioRef.current)
                 audioRef.current.currentTime = Math.min(audioRef.current.duration || 0, audioRef.current.currentTime + (d.seekOffset || 10))
@@ -666,7 +664,9 @@ const Music = () => {
     // eslint-disable-next-line
     }, [])
 
-    // Update lock screen metadata whenever the current song changes
+    // Update metadata + re-register nexttrack/previoustrack on every song change.
+    // iOS drops background handlers; refreshing them per song is required for the
+    // next/previous buttons to appear reliably on the lock screen.
     useEffect(() => {
         if (!('mediaSession' in navigator) || !currentSong) return
         navigator.mediaSession.metadata = new window.MediaMetadata({
@@ -676,6 +676,8 @@ const Music = () => {
                 ? [{ src: currentSong.cover, sizes: '512x512', type: 'image/jpeg' }]
                 : [],
         })
+        navigator.mediaSession.setActionHandler('nexttrack', () => mediaActionRef.current.skipNext?.())
+        navigator.mediaSession.setActionHandler('previoustrack', () => mediaActionRef.current.skipPrev?.())
     }, [currentSong])
 
     // Keep the lock screen play/pause indicator in sync
@@ -1267,8 +1269,34 @@ const Music = () => {
 
             <audio
                 ref={audioRef}
-                onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime || 0)}
-                onDurationChange={() => setDuration(audioRef.current?.duration || 0)}
+                onTimeUpdate={() => {
+                    const a = audioRef.current
+                    if (!a) return
+                    setCurrentTime(a.currentTime)
+                    if ('mediaSession' in navigator && a.duration && isFinite(a.duration)) {
+                        try {
+                            navigator.mediaSession.setPositionState({
+                                duration: a.duration,
+                                playbackRate: a.playbackRate || 1,
+                                position: a.currentTime,
+                            })
+                        } catch (_) {}
+                    }
+                }}
+                onDurationChange={() => {
+                    const a = audioRef.current
+                    if (!a) return
+                    setDuration(a.duration || 0)
+                    if ('mediaSession' in navigator && a.duration && isFinite(a.duration)) {
+                        try {
+                            navigator.mediaSession.setPositionState({
+                                duration: a.duration,
+                                playbackRate: a.playbackRate || 1,
+                                position: a.currentTime,
+                            })
+                        } catch (_) {}
+                    }
+                }}
                 onEnded={handleEnded}
             />
 
