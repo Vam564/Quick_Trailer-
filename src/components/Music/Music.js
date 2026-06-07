@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { makeStyles } from '@material-ui/core/styles'
 import {
@@ -30,10 +30,17 @@ import { clearMusicSearch } from '../../store/actions/ListPageActionTypes'
 
 const SAAVN_BASE = 'https://jiosavan-api2.vercel.app/api'
 
+const decodeHtml = (str) => {
+    if (!str) return ''
+    const el = document.createElement('textarea')
+    el.innerHTML = str
+    return el.value
+}
+
 const mapTrack = (t) => ({
     id: t.id,
-    title: t.name || '',
-    artist: t.artists?.primary?.map(a => a.name).join(', ') || '',
+    title: decodeHtml(t.name || ''),
+    artist: t.artists?.primary?.map(a => decodeHtml(a.name)).join(', ') || '',
     cover: t.image?.[2]?.url || t.image?.[1]?.url || '',
     previewUrl: t.downloadUrl?.[4]?.url || t.downloadUrl?.[3]?.url || t.downloadUrl?.[2]?.url || '',
     duration: Number(t.duration) || 0,
@@ -337,36 +344,56 @@ const useStyles = makeStyles((theme) => ({
     // ----- Player bar -----
     player_bar: {
         position: 'fixed', bottom: 0, left: 0, right: 0,
-        background: '#fff', borderTop: '1px solid #e0e0e0',
-        display: 'flex', alignItems: 'center', padding: '10px 20px', zIndex: 1000, gap: 12,
-        [theme.breakpoints.down('sm')]: { flexWrap: 'wrap', padding: '8px 12px' },
+        background: 'linear-gradient(135deg, #1a1a2e 0%, #121212 100%)', borderTop: '1px solid #333',
+        display: 'flex', alignItems: 'center', padding: '4px 20px', zIndex: 1000, gap: 0,
+        touchAction: 'none',
+        [theme.breakpoints.down('sm')]: { padding: '8px 12px', gap: 8, cursor: 'pointer' },
     },
-    player_art: { width: 52, height: 52, borderRadius: 6, objectFit: 'cover', flexShrink: 0 },
-    player_art_placeholder: {
-        width: 52, height: 52, borderRadius: 6, flexShrink: 0,
-        background: 'linear-gradient(135deg, #1DB954 0%, #191414 100%)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
+    player_left: {
+        flex: 1, display: 'flex', alignItems: 'center', gap: 10, minWidth: 0,
+        cursor: 'pointer',
+        maxWidth: '30%',
+        [theme.breakpoints.down('sm')]: { maxWidth: 'none' },
     },
-    player_info: { minWidth: 0, flex: '0 0 150px' },
-    player_title: {
-        fontSize: 13, fontWeight: 'bold', color: '#222', margin: 0,
-        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-    },
-    player_artist: {
-        fontSize: 11, color: '#777', margin: 0,
-        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-    },
-    player_controls: { display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 },
-    play_btn: { background: '#1DB954', color: '#fff', padding: 6, '&:hover': { background: '#17a349' } },
-    icon_btn: { color: '#9b9b9b', '&:hover': { color: '#333' } },
-    icon_active: { color: '#1DB954 !important' },
-    player_progress: { flex: 1, minWidth: 80, display: 'flex', alignItems: 'center', gap: 8 },
-    time_label: { fontSize: 11, color: '#999', flexShrink: 0, minWidth: 36 },
-    volume_section: {
-        display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, width: 120,
+    player_center: {
+        flex: '0 0 40%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+        padding: '0 16px',
         [theme.breakpoints.down('sm')]: { display: 'none' },
     },
-    dl_btn: { color: '#9b9b9b', flexShrink: 0, '&:hover': { color: '#1DB954' } },
+    player_center_controls: { display: 'flex', alignItems: 'center', gap: 4 },
+    player_center_progress: { display: 'flex', alignItems: 'center', gap: 8, width: '100%' },
+    player_mobile_controls: {
+        display: 'none',
+        [theme.breakpoints.down('sm')]: { display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 },
+    },
+    player_right: {
+        flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4,
+        [theme.breakpoints.down('sm')]: { display: 'none' },
+    },
+    player_art: { width: 48, height: 48, borderRadius: 6, objectFit: 'cover', flexShrink: 0, [theme.breakpoints.down('sm')]: { width: 44, height: 44 } },
+    player_art_placeholder: {
+        width: 48, height: 48, borderRadius: 6, flexShrink: 0,
+        background: 'linear-gradient(135deg, #1DB954 0%, #191414 100%)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        [theme.breakpoints.down('sm')]: { width: 44, height: 44 },
+    },
+    player_info: { minWidth: 0, flex: 1 },
+    player_title: {
+        fontSize: 13, fontWeight: 'bold', color: '#fff', margin: 0,
+        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+        [theme.breakpoints.down('sm')]: { fontSize: 12 },
+    },
+    player_artist: {
+        fontSize: 11, color: '#aaa', margin: '2px 0 0',
+        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+        [theme.breakpoints.down('sm')]: { fontSize: 10 },
+    },
+    play_btn: { background: '#1DB954', color: '#fff', padding: 8, '&:hover': { background: '#17a349' } },
+    icon_btn: { color: '#aaa', '&:hover': { color: '#fff' } },
+    icon_active: { color: '#1DB954 !important' },
+    time_label: { fontSize: 11, color: '#777', flexShrink: 0, minWidth: 32, textAlign: 'center' },
+    volume_section: { display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 },
+    dl_btn: { color: '#aaa', flexShrink: 0, '&:hover': { color: '#1DB954' } },
     loop_btn: {
         display: 'flex',
         alignItems: 'center',
@@ -475,6 +502,41 @@ const useStyles = makeStyles((theme) => ({
     expanded_queue_title_active: { color: '#1DB954 !important' },
     expanded_queue_artist: { fontSize: 11, color: '#666', margin: '2px 0 0' },
     expanded_queue_dur: { fontSize: 11, color: '#555', flexShrink: 0, paddingLeft: 8 },
+    expanded_tabs: {
+        display: 'flex', gap: 0, borderBottom: '1px solid rgba(255,255,255,0.1)',
+        padding: '0 24px', margin: '10px 0 0',
+    },
+    expanded_tab_btn: {
+        flex: 1, padding: '10px 0', border: 'none', background: 'none',
+        cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#555',
+        borderBottom: '2px solid transparent', transition: 'all 0.2s',
+        '&:hover': { color: '#999' },
+    },
+    expanded_tab_active: {
+        color: '#1DB954 !important', borderBottomColor: '#1DB954 !important',
+    },
+    expanded_lyrics_container: {
+        flex: 1, overflowY: 'auto', padding: '20px 28px 100px',
+        scrollBehavior: 'smooth',
+        '&::-webkit-scrollbar': { width: 4 },
+        '&::-webkit-scrollbar-thumb': { background: 'rgba(255,255,255,0.15)', borderRadius: 2 },
+    },
+    expanded_lyrics_line: {
+        fontSize: 22, fontWeight: 700,
+        color: 'rgba(255,255,255,0.22)',
+        margin: '10px 0', lineHeight: 1.55,
+        cursor: 'pointer', wordBreak: 'break-word',
+        transition: 'color 0.35s ease, font-size 0.25s ease, opacity 0.35s ease',
+        '&:hover': { color: 'rgba(255,255,255,0.5)' },
+    },
+    expanded_lyrics_line_active: {
+        color: '#fff !important',
+        fontSize: 26,
+    },
+    expanded_lyrics_placeholder: {
+        fontSize: 14, color: '#555', textAlign: 'center', padding: '48px 0',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
+    },
     mini_bar_clickable: {
         display: 'flex', alignItems: 'center', gap: 12,
         cursor: 'pointer', flexShrink: 0, minWidth: 0,
@@ -497,6 +559,32 @@ const dedup = (arr) => {
         seen.add(key)
         return true
     })
+}
+
+// Parse plain-text, <br>-separated, or LRC-timestamped lyrics into { lines, synced }
+const parseLyrics = (text) => {
+    if (!text) return { lines: [], synced: false }
+    // Normalise: turn <br> HTML tags into newlines, strip any remaining tags/entities
+    const normalized = text
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/&nbsp;/gi, ' ')
+        .replace(/<[^>]+>/g, '')
+    const lrcRe = /^\[(\d{2}):(\d{2})[.:](\d{2,3})\](.*)/
+    const parsed = normalized.split('\n').reduce((acc, raw) => {
+        const m = raw.match(lrcRe)
+        if (m) {
+            const time = parseInt(m[1]) * 60 + parseInt(m[2]) + parseInt(m[3].padEnd(3, '0')) / 1000
+            const txt = m[4].trim()
+            if (txt) acc.push({ time, text: txt })
+        } else if (raw.trim()) {
+            acc.push({ time: null, text: raw.trim() })
+        }
+        return acc
+    }, [])
+    return {
+        lines: parsed,
+        synced: parsed.length > 0 && parsed.every(l => l.time !== null),
+    }
 }
 
 const Music = () => {
@@ -547,13 +635,16 @@ const Music = () => {
     const [repeat, setRepeat]             = useState('none')
     const [downloading, setDownloading]   = useState(false)
     const [playerExpanded, setPlayerExpanded] = useState(false)
+    const [showLyrics, setShowLyrics] = useState(false)
+    const [lyrics, setLyrics] = useState('')
+    const [loadingLyrics, setLoadingLyrics] = useState(false)
 
     const openExpanded = () => {
         setPlayerExpanded(true)
         setTimeout(() => {
             if (expandedOverlayRef.current) {
-                expandedOverlayRef.current.style.transform = ''
-                expandedOverlayRef.current.style.transition = ''
+                expandedOverlayRef.current.style.transform = 'translateY(0)'
+                expandedOverlayRef.current.style.transition = 'transform 0.3s ease'
             }
         }, 0)
     }
@@ -563,7 +654,9 @@ const Music = () => {
     const albumSearchTimerRef = useRef(null)
     const loaderRef           = useRef(null)
     const expandedOverlayRef  = useRef(null)
+    const activeLyricRef      = useRef(null)
     const swipeTouchStartY    = useRef(0)
+    const swipeTouchStartX    = useRef(0)
     const mediaActionRef      = useRef({})
 
     // Songs shown in the Songs tab grid
@@ -588,6 +681,28 @@ const Music = () => {
 
     const displayAlbums = albumSearchResults !== null ? albumSearchResults : albums
 
+    // ---- Synced / estimated lyrics ----
+    const { lines: lyricsLines, synced: lyricsSynced } = useMemo(() => parseLyrics(lyrics), [lyrics])
+
+    const currentLyricLine = useMemo(() => {
+        if (!lyricsLines.length || !duration) return -1
+        if (lyricsSynced) {
+            for (let i = lyricsLines.length - 1; i >= 0; i--) {
+                if (lyricsLines[i].time <= currentTime) return i
+            }
+            return -1
+        }
+        const adjusted = Math.max(0, currentTime - 4)
+        return Math.min(Math.floor(adjusted / duration * lyricsLines.length), lyricsLines.length - 1)
+    }, [lyricsLines, lyricsSynced, currentTime, duration])
+
+    // Auto-scroll active lyric line into view
+    useEffect(() => {
+        if (showLyrics && activeLyricRef.current) {
+            activeLyricRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
+    }, [currentLyricLine, showLyrics])
+
     // ---- Songs tab fetching ----
     const fetchQuery = useCallback((query, append = false) => {
         return axios.get(`${SAAVN_BASE}/search/songs`, { params: { query, limit: 50 } })
@@ -610,6 +725,60 @@ const Music = () => {
     useEffect(() => {
         if (audioRef.current) audioRef.current.volume = muted ? 0 : volume
     }, [volume, muted])
+
+    const fetchLyrics = useCallback(async (song) => {
+        setLoadingLyrics(true)
+        setLyrics('')
+        try {
+            let lyricsText = ''
+
+            // 1. Try lrclib.net — returns LRC-format timestamped lyrics for accurate sync
+            try {
+                const params = { track_name: song.title, artist_name: song.artist }
+                if (song.duration) params.duration = Math.round(song.duration)
+                const res = await axios.get('https://lrclib.net/api/get', { params })
+                lyricsText = res.data?.syncedLyrics || res.data?.plainLyrics || ''
+            } catch (_) {}
+
+            // 2. If lrclib had nothing, try lrclib fuzzy search
+            if (!lyricsText) {
+                try {
+                    const res = await axios.get('https://lrclib.net/api/search', {
+                        params: { track_name: song.title, artist_name: song.artist }
+                    })
+                    const hit = (res.data || []).find(r => r.syncedLyrics || r.plainLyrics)
+                    if (hit) lyricsText = hit.syncedLyrics || hit.plainLyrics || ''
+                } catch (_) {}
+            }
+
+            // 3. Fall back to JioSaavn lyrics endpoint, then song detail
+            if (!lyricsText) {
+                try {
+                    const res = await axios.get(`${SAAVN_BASE}/songs/${song.id}/lyrics`)
+                    lyricsText = res.data?.data?.lyrics || ''
+                } catch (_) {}
+            }
+            if (!lyricsText) {
+                try {
+                    const res = await axios.get(`${SAAVN_BASE}/songs`, { params: { id: song.id } })
+                    lyricsText = res.data?.data?.[0]?.lyrics || ''
+                } catch (_) {}
+            }
+
+            setLyrics(lyricsText && lyricsText !== '(Instrumental)' ? lyricsText : 'No lyrics available for this song')
+        } catch (e) {
+            console.log(e)
+            setLyrics('Could not fetch lyrics')
+        } finally {
+            setLoadingLyrics(false)
+        }
+    }, [])
+
+    useEffect(() => {
+        if (currentSong) {
+            fetchLyrics(currentSong)
+        }
+    }, [currentSong, fetchLyrics])
 
     useEffect(() => {
         if (musicSearchFlag) { setLocalSearch(''); setLocalSearchResults(null) }
@@ -927,28 +1096,89 @@ const Music = () => {
         finally { setDownloading(false) }
     }
 
+    useEffect(() => {
+        if (!playerExpanded) return
+        const el = expandedOverlayRef.current
+        if (!el) return
+        let startY = 0, startX = 0, swiping = false
+        const onTouchStart = (e) => {
+            startY = e.touches[0].clientY
+            startX = e.touches[0].clientX
+            swiping = false
+            el.style.transition = 'none'
+        }
+        const onTouchMove = (e) => {
+            const dy = e.touches[0].clientY - startY
+            const dx = e.touches[0].clientX - startX
+            if (!swiping && Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx) && dy > 0) swiping = true
+            if (swiping) { e.preventDefault(); el.style.transform = `translateY(${Math.max(0, dy)}px)` }
+        }
+        const onTouchEnd = (e) => {
+            const dy = e.changedTouches[0].clientY - startY
+            if (swiping && dy > 80) {
+                el.style.transition = 'transform 0.25s ease'
+                el.style.transform = 'translateY(100%)'
+                setTimeout(() => setPlayerExpanded(false), 250)
+            } else if (swiping) {
+                el.style.transition = 'transform 0.25s ease'
+                el.style.transform = 'translateY(0)'
+            }
+            swiping = false
+        }
+        el.addEventListener('touchstart', onTouchStart, { passive: true })
+        el.addEventListener('touchmove', onTouchMove, { passive: false })
+        el.addEventListener('touchend', onTouchEnd, { passive: true })
+        return () => {
+            el.removeEventListener('touchstart', onTouchStart)
+            el.removeEventListener('touchmove', onTouchMove)
+            el.removeEventListener('touchend', onTouchEnd)
+        }
+    }, [playerExpanded])
+
     const handleSwipeStart = (e) => {
         swipeTouchStartY.current = e.touches[0].clientY
+        swipeTouchStartX.current = e.touches[0].clientX
         if (expandedOverlayRef.current) expandedOverlayRef.current.style.transition = 'none'
     }
 
     const handleSwipeMove = (e) => {
-        const delta = e.touches[0].clientY - swipeTouchStartY.current
-        if (delta > 0 && expandedOverlayRef.current) {
-            expandedOverlayRef.current.style.transform = `translateY(${delta}px)`
+        const deltaY = e.touches[0].clientY - swipeTouchStartY.current
+        const deltaX = e.touches[0].clientX - swipeTouchStartX.current
+        
+        // Only swipe if vertical movement is greater than horizontal (not a scroll)
+        if (Math.abs(deltaY) > Math.abs(deltaX)) {
+            // Swipe down to collapse expanded view
+            if (playerExpanded && deltaY > 0 && expandedOverlayRef.current) {
+                expandedOverlayRef.current.style.transform = `translateY(${deltaY}px)`
+            }
         }
     }
 
     const handleSwipeEnd = (e) => {
-        const delta = e.changedTouches[0].clientY - swipeTouchStartY.current
-        if (!expandedOverlayRef.current) return
-        if (delta > 80) {
-            expandedOverlayRef.current.style.transition = 'transform 0.25s ease'
-            expandedOverlayRef.current.style.transform = 'translateY(100%)'
-            setTimeout(() => setPlayerExpanded(false), 250)
-        } else {
-            expandedOverlayRef.current.style.transition = 'transform 0.25s ease'
-            expandedOverlayRef.current.style.transform = 'translateY(0)'
+        const deltaY = e.changedTouches[0].clientY - swipeTouchStartY.current
+        const deltaX = e.changedTouches[0].clientX - swipeTouchStartX.current
+        
+        // Only register swipe if vertical movement is significant
+        if (Math.abs(deltaY) < Math.abs(deltaX)) return
+        
+        // From expanded view: swipe down to collapse
+        if (playerExpanded && expandedOverlayRef.current) {
+            if (deltaY > 80) {
+                expandedOverlayRef.current.style.transition = 'transform 0.25s ease'
+                expandedOverlayRef.current.style.transform = 'translateY(100%)'
+                setTimeout(() => setPlayerExpanded(false), 250)
+            } else {
+                expandedOverlayRef.current.style.transition = 'transform 0.25s ease'
+                expandedOverlayRef.current.style.transform = 'translateY(0)'
+            }
+        } 
+        // From mini player: swipe up to expand
+        else if (!playerExpanded && deltaY < -80) {
+            if (expandedOverlayRef.current) {
+                expandedOverlayRef.current.style.transition = 'transform 0.3s ease'
+                expandedOverlayRef.current.style.transform = 'translateY(0)'
+            }
+            openExpanded()
         }
     }
 
@@ -1305,9 +1535,6 @@ const Music = () => {
                 <div
                     className={classes.expanded_overlay}
                     ref={expandedOverlayRef}
-                    onTouchStart={handleSwipeStart}
-                    onTouchMove={handleSwipeMove}
-                    onTouchEnd={handleSwipeEnd}
                 >
                     <div className={classes.expanded_header}>
                         <IconButton className={classes.expanded_icon_btn} onClick={() => setPlayerExpanded(false)}>
@@ -1389,44 +1616,103 @@ const Music = () => {
                     </div>
 
                     {playQueue.length > 0 && (
-                        <div className={classes.expanded_queue}>
-                            <p className={classes.expanded_queue_header}>Up Next</p>
-                            {playQueue.map((song, i) => (
-                                <div
-                                    key={`${song.id}-${i}`}
-                                    className={`${classes.expanded_queue_row} ${currentSong === song ? classes.expanded_queue_active : ''}`}
-                                    onClick={() => playSong(song, i)}
+                        <>
+                            <div className={classes.expanded_tabs}>
+                                <button
+                                    className={`${classes.expanded_tab_btn} ${!showLyrics ? classes.expanded_tab_active : ''}`}
+                                    onClick={() => setShowLyrics(false)}
                                 >
-                                    {song.cover ? (
-                                        <img src={song.cover} alt={song.title} className={classes.expanded_queue_thumb}
-                                            onError={(e) => { e.target.style.display = 'none' }} />
+                                    Queue
+                                </button>
+                                <button
+                                    className={`${classes.expanded_tab_btn} ${showLyrics ? classes.expanded_tab_active : ''}`}
+                                    onClick={() => setShowLyrics(true)}
+                                >
+                                    Lyrics
+                                </button>
+                            </div>
+
+                            {!showLyrics ? (
+                                <div className={classes.expanded_queue}>
+                                    <p className={classes.expanded_queue_header}>Up Next</p>
+                                    {playQueue.map((song, i) => (
+                                        <div
+                                            key={`${song.id}-${i}`}
+                                            className={`${classes.expanded_queue_row} ${currentSong === song ? classes.expanded_queue_active : ''}`}
+                                            onClick={() => playSong(song, i)}
+                                        >
+                                            {song.cover ? (
+                                                <img src={song.cover} alt={song.title} className={classes.expanded_queue_thumb}
+                                                    onError={(e) => { e.target.style.display = 'none' }} />
+                                            ) : (
+                                                <div className={classes.expanded_queue_thumb_ph}>
+                                                    <MusicNoteIcon style={{ color: 'rgba(255,255,255,0.5)', fontSize: 18 }} />
+                                                </div>
+                                            )}
+                                            <div className={classes.expanded_queue_info}>
+                                                <p className={`${classes.expanded_queue_title} ${currentSong === song ? classes.expanded_queue_title_active : ''}`}>
+                                                    {song.title}
+                                                </p>
+                                                <p className={classes.expanded_queue_artist}>{song.artist}</p>
+                                            </div>
+                                            <span className={classes.expanded_queue_dur}>{fmt(song.duration)}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className={classes.expanded_lyrics_container}>
+                                    {loadingLyrics ? (
+                                        <div style={{ display: 'flex', justifyContent: 'center', padding: 48 }}>
+                                            <CircularProgress style={{ color: '#1DB954' }} />
+                                        </div>
+                                    ) : lyricsLines.length > 0 ? (
+                                        lyricsLines.map((line, i) => (
+                                            <p
+                                                key={i}
+                                                ref={i === currentLyricLine ? activeLyricRef : null}
+                                                className={`${classes.expanded_lyrics_line} ${i === currentLyricLine ? classes.expanded_lyrics_line_active : ''}`}
+                                                onClick={() => {
+                                                    const a = audioRef.current
+                                                    if (!a) return
+                                                    const dur = a.duration
+                                                    if (!dur || !isFinite(dur) || dur <= 0) return
+                                                    a.currentTime = lyricsSynced && line.time != null
+                                                        ? line.time
+                                                        : (i / lyricsLines.length) * dur
+                                                }}
+                                            >
+                                                {line.text}
+                                            </p>
+                                        ))
                                     ) : (
-                                        <div className={classes.expanded_queue_thumb_ph}>
-                                            <MusicNoteIcon style={{ color: 'rgba(255,255,255,0.5)', fontSize: 18 }} />
+                                        <div className={classes.expanded_lyrics_placeholder}>
+                                            <MusicNoteIcon style={{ fontSize: 36, color: '#444' }} />
+                                            <p style={{ margin: 0, color: '#555', fontSize: 14 }}>
+                                                {lyrics || 'No lyrics available'}
+                                            </p>
                                         </div>
                                     )}
-                                    <div className={classes.expanded_queue_info}>
-                                        <p className={`${classes.expanded_queue_title} ${currentSong === song ? classes.expanded_queue_title_active : ''}`}>
-                                            {song.title}
-                                        </p>
-                                        <p className={classes.expanded_queue_artist}>{song.artist}</p>
-                                    </div>
-                                    <span className={classes.expanded_queue_dur}>{fmt(song.duration)}</span>
                                 </div>
-                            ))}
-                        </div>
+                            )}
+                        </>
                     )}
                 </div>
             )}
 
             {currentSong && (
-                <div className={classes.player_bar}>
-                    <div className={classes.mini_bar_clickable} onClick={openExpanded}>
+                <div
+                    className={classes.player_bar}
+                    onTouchStart={handleSwipeStart}
+                    onTouchMove={handleSwipeMove}
+                    onTouchEnd={handleSwipeEnd}
+                >
+                    {/* Left: art + info — clicking opens expanded on both mobile & desktop */}
+                    <div className={classes.player_left} onClick={openExpanded}>
                         {currentSong.cover ? (
                             <img src={currentSong.cover} alt="" className={classes.player_art} />
                         ) : (
                             <div className={classes.player_art_placeholder}>
-                                <MusicNoteIcon style={{ color: 'rgba(255,255,255,0.5)' }} />
+                                <MusicNoteIcon style={{ color: 'rgba(255,255,255,0.5)', fontSize: 32 }} />
                             </div>
                         )}
                         <div className={classes.player_info}>
@@ -1435,47 +1721,74 @@ const Music = () => {
                         </div>
                     </div>
 
-                    <div className={classes.player_controls}>
-                        <Tooltip title={shuffle ? 'Shuffle On' : 'Shuffle Off'}>
-                            <IconButton size="small" className={`${classes.icon_btn} ${shuffle ? classes.icon_active : ''}`} onClick={() => setShuffle(s => !s)}>
-                                <ShuffleIcon fontSize="small" />
+                    {/* Center: full controls + seekbar — desktop only */}
+                    <div className={classes.player_center}>
+                        <div className={classes.player_center_controls}>
+                            <Tooltip title={shuffle ? 'Shuffle On' : 'Shuffle Off'}>
+                                <IconButton size="small" className={`${classes.icon_btn} ${shuffle ? classes.icon_active : ''}`} onClick={() => setShuffle(s => !s)}>
+                                    <ShuffleIcon style={{ fontSize: 18 }} />
+                                </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Previous">
+                                <IconButton size="small" className={classes.icon_btn} onClick={skipPrev}>
+                                    <SkipPreviousIcon style={{ fontSize: 28 }} />
+                                </IconButton>
+                            </Tooltip>
+                            <IconButton size="small" className={classes.play_btn} onClick={togglePlay}>
+                                {isPlaying ? <PauseIcon style={{ fontSize: 24 }} /> : <PlayArrowIcon style={{ fontSize: 24 }} />}
+                            </IconButton>
+                            <Tooltip title="Next">
+                                <IconButton size="small" className={classes.icon_btn} onClick={skipNext}>
+                                    <SkipNextIcon style={{ fontSize: 28 }} />
+                                </IconButton>
+                            </Tooltip>
+                            <Tooltip title={repeat === 'none' ? 'Repeat Off' : repeat === 'all' ? 'Repeat All' : 'Repeat One'}>
+                                <IconButton size="small" className={`${classes.icon_btn} ${repeat !== 'none' ? classes.icon_active : ''}`} onClick={cycleRepeat}>
+                                    {repeat === 'one' ? <RepeatOneIcon style={{ fontSize: 18 }} /> : <RepeatIcon style={{ fontSize: 18 }} />}
+                                </IconButton>
+                            </Tooltip>
+                        </div>
+                        <div className={classes.player_center_progress}>
+                            <span className={classes.time_label}>{fmt(currentTime)}</span>
+                            <Slider min={0} max={duration || 1} value={currentTime} onChange={handleSeek}
+                                style={{ color: '#1DB954', flex: 1 }} />
+                            <span className={classes.time_label}>{fmt(duration)}</span>
+                        </div>
+                    </div>
+
+                    {/* Mobile only: prev / play / next */}
+                    <div className={classes.player_mobile_controls}>
+                        <Tooltip title="Previous">
+                            <IconButton size="small" className={classes.icon_btn} onClick={skipPrev}>
+                                <SkipPreviousIcon style={{ fontSize: 28 }} />
                             </IconButton>
                         </Tooltip>
-                        <IconButton size="small" className={classes.icon_btn} onClick={skipPrev}>
-                            <SkipPreviousIcon />
-                        </IconButton>
                         <IconButton size="small" className={classes.play_btn} onClick={togglePlay}>
-                            {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
+                            {isPlaying ? <PauseIcon style={{ fontSize: 24 }} /> : <PlayArrowIcon style={{ fontSize: 24 }} />}
                         </IconButton>
-                        <IconButton size="small" className={classes.icon_btn} onClick={skipNext}>
-                            <SkipNextIcon />
-                        </IconButton>
-                        <Tooltip title={repeat === 'none' ? 'Repeat Off' : repeat === 'all' ? 'Repeat All' : 'Repeat One'}>
-                            <IconButton size="small" className={`${classes.icon_btn} ${repeat !== 'none' ? classes.icon_active : ''}`} onClick={cycleRepeat}>
-                                {repeat === 'one' ? <RepeatOneIcon fontSize="small" /> : <RepeatIcon fontSize="small" />}
+                        <Tooltip title="Next">
+                            <IconButton size="small" className={classes.icon_btn} onClick={skipNext}>
+                                <SkipNextIcon style={{ fontSize: 28 }} />
                             </IconButton>
                         </Tooltip>
                     </div>
 
-                    <div className={classes.player_progress}>
-                        <span className={classes.time_label}>{fmt(currentTime)}</span>
-                        <Slider min={0} max={duration || 1} value={currentTime} onChange={handleSeek} style={{ color: '#1DB954' }} />
-                        <span className={classes.time_label}>{fmt(duration)}</span>
+                    {/* Right: volume + download — desktop only */}
+                    <div className={classes.player_right}>
+                        <div className={classes.volume_section}>
+                            <IconButton size="small" className={classes.icon_btn} onClick={() => setMuted(m => !m)}>
+                                {muted ? <VolumeOffIcon fontSize="small" /> : <VolumeUpIcon fontSize="small" />}
+                            </IconButton>
+                            <Slider min={0} max={1} step={0.01} value={muted ? 0 : volume}
+                                onChange={(_, v) => { setVolume(v); setMuted(false) }}
+                                style={{ color: '#1DB954', width: 80 }} />
+                        </div>
+                        <Tooltip title="Download">
+                            <IconButton size="small" className={classes.dl_btn} onClick={handleDownload} disabled={downloading}>
+                                {downloading ? <CircularProgress size={16} style={{ color: '#1DB954' }} /> : <GetAppIcon fontSize="small" />}
+                            </IconButton>
+                        </Tooltip>
                     </div>
-
-                    <div className={classes.volume_section}>
-                        <IconButton size="small" className={classes.icon_btn} onClick={() => setMuted(m => !m)}>
-                            {muted ? <VolumeOffIcon fontSize="small" /> : <VolumeUpIcon fontSize="small" />}
-                        </IconButton>
-                        <Slider min={0} max={1} step={0.01} value={muted ? 0 : volume}
-                            onChange={(_, v) => { setVolume(v); setMuted(false) }} style={{ color: '#1DB954' }} />
-                    </div>
-
-                    <Tooltip title="Download">
-                        <IconButton size="small" className={classes.dl_btn} onClick={handleDownload} disabled={downloading}>
-                            {downloading ? <CircularProgress size={18} style={{ color: '#1DB954' }} /> : <GetAppIcon fontSize="small" />}
-                        </IconButton>
-                    </Tooltip>
                 </div>
             )}
         </div>
