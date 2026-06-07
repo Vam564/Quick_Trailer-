@@ -19,6 +19,7 @@ import RepeatIcon from '@material-ui/icons/Repeat'
 import RepeatOneIcon from '@material-ui/icons/RepeatOne'
 import GetAppIcon from '@material-ui/icons/GetApp'
 import SearchIcon from '@material-ui/icons/Search'
+import MicIcon from '@material-ui/icons/Mic'
 import ArrowBackIcon from '@material-ui/icons/ArrowBack'
 import AllInclusiveIcon from '@material-ui/icons/AllInclusive'
 import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown'
@@ -176,6 +177,13 @@ const useStyles = makeStyles((theme) => ({
         color: '#1DB954',
         borderBottomColor: '#1DB954',
     },
+    search_row: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        padding: '0 24px',
+        margin: '12px 0 8px',
+    },
     search_bar: {
         display: 'flex',
         alignItems: 'center',
@@ -183,16 +191,48 @@ const useStyles = makeStyles((theme) => ({
         borderRadius: 24,
         padding: '6px 16px',
         gap: 8,
-        margin: '12px 24px',
-        maxWidth: 480,
+        flex: 1,
+        minWidth: 0,
+    },
+    shuffle_btn: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 4,
+        padding: '5px 14px',
+        border: '1.5px solid #e0e0e0',
+        borderRadius: 20,
+        background: 'none',
+        cursor: 'pointer',
+        fontSize: 12,
+        fontWeight: 700,
+        color: '#999',
+        transition: 'all 0.2s',
+        flexShrink: 0,
+        whiteSpace: 'nowrap',
+        '&:hover': { borderColor: '#1DB954', color: '#1DB954' },
+    },
+    shuffle_btn_active: {
+        borderColor: '#1DB954 !important',
+        color: '#1DB954 !important',
+        background: 'rgba(29,185,84,0.1) !important',
     },
     search_input: { color: '#333', flex: 1, fontSize: 14 },
     search_icon_color: { color: '#999', fontSize: 18 },
+    mic_btn: { color: '#999', padding: 4, '&:hover': { color: '#1DB954' } },
+    mic_btn_active: {
+        color: '#e53935 !important',
+        animation: '$micPulse 1s ease-in-out infinite',
+    },
+    '@keyframes micPulse': {
+        '0%':   { transform: 'scale(1)', opacity: 1 },
+        '50%':  { transform: 'scale(1.25)', opacity: 0.7 },
+        '100%': { transform: 'scale(1)', opacity: 1 },
+    },
     categories_row: {
         display: 'flex',
         overflowX: 'auto',
         gap: 10,
-        padding: '0 24px 16px',
+        padding: '6px 24px 14px',
         scrollbarWidth: 'none',
         '&::-webkit-scrollbar': { display: 'none' },
     },
@@ -604,6 +644,7 @@ const Music = () => {
     const [localSearch, setLocalSearch]               = useState('')
     const [localSearchResults, setLocalSearchResults] = useState(null)
     const [localSearchLoading, setLocalSearchLoading] = useState(false)
+    const [songsShuffleOrder, setSongsShuffleOrder]   = useState(null)
 
     // ----- Albums tab -----
     const [albumCategory, setAlbumCategory]         = useState(ALBUM_CATEGORIES[0])
@@ -619,8 +660,9 @@ const Music = () => {
     const [continuousPlay, setContinuousPlay]       = useState(false)
     const [autoLoadingAlbum, setAutoLoadingAlbum]   = useState(false)
     const [albumSearch, setAlbumSearch]             = useState('')
-    const [albumSearchResults, setAlbumSearchResults] = useState(null)
-    const [albumSearchLoading, setAlbumSearchLoading] = useState(false)
+    const [albumSearchResults, setAlbumSearchResults]   = useState(null)
+    const [albumSearchLoading, setAlbumSearchLoading]   = useState(false)
+    const [albumsShuffleOrder, setAlbumsShuffleOrder]   = useState(null)
 
     // ----- Player -----
     const [currentSong, setCurrentSong]   = useState(null)
@@ -649,6 +691,8 @@ const Music = () => {
         }, 0)
     }
 
+    const [voiceTarget, setVoiceTarget]     = useState(null) // 'songs' | 'albums' | null
+
     const audioRef            = useRef(null)
     const searchTimerRef      = useRef(null)
     const albumSearchTimerRef = useRef(null)
@@ -658,6 +702,9 @@ const Music = () => {
     const swipeTouchStartY    = useRef(0)
     const swipeTouchStartX    = useRef(0)
     const mediaActionRef      = useRef({})
+    const recognitionRef      = useRef(null)
+
+    const speechSupported = !!(window.SpeechRecognition || window.webkitSpeechRecognition)
 
     // Songs shown in the Songs tab grid
     const displaySongs = musicSearchFlag
@@ -665,11 +712,6 @@ const Music = () => {
         : localSearchResults !== null
             ? localSearchResults
             : songs
-
-    // Queue the player's skip next/prev navigates through
-    const playQueue = (activeTab === 'albums' && selectedAlbum)
-        ? albumSongs
-        : displaySongs
 
     const activeSectionLabel = musicSearchFlag
         ? `Results for "${searchValue}"`
@@ -680,6 +722,14 @@ const Music = () => {
     const hasMoreQueries = queryIndex + 1 < currentCategory.queries.length
 
     const displayAlbums = albumSearchResults !== null ? albumSearchResults : albums
+
+    const finalDisplaySongs  = songsShuffleOrder  || displaySongs
+    const finalDisplayAlbums = albumsShuffleOrder || displayAlbums
+
+    // Queue the player's skip next/prev navigates through
+    const playQueue = (activeTab === 'albums' && selectedAlbum)
+        ? albumSongs
+        : finalDisplaySongs
 
     // ---- Synced / estimated lyrics ----
     const { lines: lyricsLines, synced: lyricsSynced } = useMemo(() => parseLyrics(lyrics), [lyrics])
@@ -732,15 +782,32 @@ const Music = () => {
         try {
             let lyricsText = ''
 
-            // 1. Try lrclib.net — returns LRC-format timestamped lyrics for accurate sync
+            // 1. JioSaavn lyrics endpoint — ID-matched, always the correct language
             try {
-                const params = { track_name: song.title, artist_name: song.artist }
-                if (song.duration) params.duration = Math.round(song.duration)
-                const res = await axios.get('https://lrclib.net/api/get', { params })
-                lyricsText = res.data?.syncedLyrics || res.data?.plainLyrics || ''
+                const res = await axios.get(`${SAAVN_BASE}/songs/${song.id}/lyrics`)
+                lyricsText = res.data?.data?.lyrics || ''
             } catch (_) {}
 
-            // 2. If lrclib had nothing, try lrclib fuzzy search
+            // 2. JioSaavn song detail fallback
+            if (!lyricsText) {
+                try {
+                    const res = await axios.get(`${SAAVN_BASE}/songs`, { params: { id: song.id } })
+                    lyricsText = res.data?.data?.[0]?.lyrics || ''
+                } catch (_) {}
+            }
+
+            // 3. Only if JioSaavn has nothing, try lrclib.net for synced LRC lyrics
+            //    (useful for English songs; skipped for Indian songs that JioSaavn already covers)
+            if (!lyricsText) {
+                try {
+                    const params = { track_name: song.title, artist_name: song.artist }
+                    if (song.duration) params.duration = Math.round(song.duration)
+                    const res = await axios.get('https://lrclib.net/api/get', { params })
+                    lyricsText = res.data?.syncedLyrics || res.data?.plainLyrics || ''
+                } catch (_) {}
+            }
+
+            // 4. lrclib fuzzy search last resort
             if (!lyricsText) {
                 try {
                     const res = await axios.get('https://lrclib.net/api/search', {
@@ -748,20 +815,6 @@ const Music = () => {
                     })
                     const hit = (res.data || []).find(r => r.syncedLyrics || r.plainLyrics)
                     if (hit) lyricsText = hit.syncedLyrics || hit.plainLyrics || ''
-                } catch (_) {}
-            }
-
-            // 3. Fall back to JioSaavn lyrics endpoint, then song detail
-            if (!lyricsText) {
-                try {
-                    const res = await axios.get(`${SAAVN_BASE}/songs/${song.id}/lyrics`)
-                    lyricsText = res.data?.data?.lyrics || ''
-                } catch (_) {}
-            }
-            if (!lyricsText) {
-                try {
-                    const res = await axios.get(`${SAAVN_BASE}/songs`, { params: { id: song.id } })
-                    lyricsText = res.data?.data?.[0]?.lyrics || ''
                 } catch (_) {}
             }
 
@@ -927,6 +980,7 @@ const Music = () => {
         setQueryIndex(0)
         setLocalSearch('')
         setLocalSearchResults(null)
+        setSongsShuffleOrder(null)
         if (musicSearchFlag) dispatch(clearMusicSearch())
         setLoadingCat(true)
         fetchQuery(cat.queries[0])
@@ -955,6 +1009,7 @@ const Music = () => {
         setAlbumCategory(cat)
         setAlbumSearch('')
         setAlbumSearchResults(null)
+        setAlbumsShuffleOrder(null)
     }
 
     const handleAlbumSearch = (e) => {
@@ -1135,6 +1190,45 @@ const Music = () => {
         }
     }, [playerExpanded])
 
+    const handleVoiceSearch = useCallback((target) => {
+        if (recognitionRef.current) {
+            recognitionRef.current.abort()
+            recognitionRef.current = null
+            setVoiceTarget(null)
+            return
+        }
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+        if (!SpeechRecognition) return
+        setVoiceTarget(target)
+        const recognition = new SpeechRecognition()
+        recognition.lang = 'en-IN'
+        recognition.interimResults = false
+        recognition.maxAlternatives = 1
+        recognition.onresult = (e) => {
+            const text = e.results[0][0].transcript
+            if (target === 'songs') {
+                setLocalSearch(text)
+                if (musicSearchFlag) dispatch(clearMusicSearch())
+                setLocalSearchLoading(true)
+                axios.get(`${SAAVN_BASE}/search/songs`, { params: { query: text, limit: 50 } })
+                    .then(res => setLocalSearchResults((res.data?.data?.results || []).map(mapTrack)))
+                    .catch(() => {})
+                    .finally(() => setLocalSearchLoading(false))
+            } else {
+                setAlbumSearch(text)
+                setAlbumSearchLoading(true)
+                axios.get(`${SAAVN_BASE}/search/albums`, { params: { query: text, limit: 40 } })
+                    .then(res => setAlbumSearchResults(sortByYear((res.data?.data?.results || []).map(mapAlbum))))
+                    .catch(() => {})
+                    .finally(() => setAlbumSearchLoading(false))
+            }
+        }
+        recognition.onend = () => { setVoiceTarget(null); recognitionRef.current = null }
+        recognition.onerror = () => { setVoiceTarget(null); recognitionRef.current = null }
+        recognitionRef.current = recognition
+        recognition.start()
+    }, [dispatch, musicSearchFlag])
+
     const handleSwipeStart = (e) => {
         swipeTouchStartY.current = e.touches[0].clientY
         swipeTouchStartX.current = e.touches[0].clientX
@@ -1209,16 +1303,40 @@ const Music = () => {
             {/* ===== SONGS TAB ===== */}
             {activeTab === 'songs' && (
                 <>
-                    <div className={classes.search_bar}>
-                        <SearchIcon className={classes.search_icon_color} />
-                        <InputBase
-                            className={classes.search_input}
-                            placeholder="Search songs, artists…"
-                            value={localSearch}
-                            onChange={handleLocalSearch}
-                            inputProps={{ 'aria-label': 'search songs' }}
-                        />
-                        {localSearchLoading && <CircularProgress size={16} style={{ color: '#1DB954' }} />}
+                    <div className={classes.search_row}>
+                        <div className={classes.search_bar}>
+                            <SearchIcon className={classes.search_icon_color} />
+                            <InputBase
+                                className={classes.search_input}
+                                placeholder="Search songs, artists…"
+                                value={localSearch}
+                                onChange={handleLocalSearch}
+                                inputProps={{ 'aria-label': 'search songs' }}
+                            />
+                            {localSearchLoading
+                                ? <CircularProgress size={16} style={{ color: '#1DB954' }} />
+                                : speechSupported && (
+                                    <Tooltip title={voiceTarget === 'songs' ? 'Listening… tap to stop' : 'Voice search'}>
+                                        <IconButton
+                                            size="small"
+                                            className={`${classes.mic_btn} ${voiceTarget === 'songs' ? classes.mic_btn_active : ''}`}
+                                            onClick={() => handleVoiceSearch('songs')}
+                                        >
+                                            <MicIcon style={{ fontSize: 18 }} />
+                                        </IconButton>
+                                    </Tooltip>
+                                )
+                            }
+                        </div>
+                        <Tooltip title={songsShuffleOrder ? 'Shuffle On — click to restore order' : 'Shuffle songs'}>
+                            <button
+                                className={`${classes.shuffle_btn} ${songsShuffleOrder ? classes.shuffle_btn_active : ''}`}
+                                onClick={() => setSongsShuffleOrder(prev => prev ? null : [...displaySongs].sort(() => Math.random() - 0.5))}
+                            >
+                                <ShuffleIcon style={{ fontSize: 16 }} />
+                                Shuffle
+                            </button>
+                        </Tooltip>
                     </div>
 
                     {!musicSearchFlag && (
@@ -1237,7 +1355,7 @@ const Music = () => {
 
                     <div className={classes.section_header}>
                         <span className={classes.section_title}>{activeSectionLabel}</span>
-                        <span className={classes.song_count}>{displaySongs.length} songs</span>
+                        <span className={classes.song_count}>{finalDisplaySongs.length} songs</span>
                     </div>
 
                     {loadingCat ? (
@@ -1247,13 +1365,13 @@ const Music = () => {
                     ) : (
                         <>
                             <Grid container justifyContent="center" className={classes.grid_wrapper}>
-                                {displaySongs.length === 0 ? (
+                                {finalDisplaySongs.length === 0 ? (
                                     <div className={classes.no_data}>
                                         <MusicNoteIcon style={{ fontSize: 48, marginBottom: 12 }} />
                                         <span>No songs found</span>
                                     </div>
                                 ) : (
-                                    displaySongs.map((song, i) => (
+                                    finalDisplaySongs.map((song, i) => (
                                         <Grid item key={`${song.id}-${i}`}>
                                             <Tooltip title={song.title || ''} placement="top">
                                                 <Card
@@ -1316,16 +1434,40 @@ const Music = () => {
                 <>
                     {/* Album search bar */}
                     {!selectedAlbum && (
-                        <div className={classes.search_bar}>
-                            <SearchIcon className={classes.search_icon_color} />
-                            <InputBase
-                                className={classes.search_input}
-                                placeholder="Search albums…"
-                                value={albumSearch}
-                                onChange={handleAlbumSearch}
-                                inputProps={{ 'aria-label': 'search albums' }}
-                            />
-                            {albumSearchLoading && <CircularProgress size={16} style={{ color: '#1DB954' }} />}
+                        <div className={classes.search_row}>
+                            <div className={classes.search_bar}>
+                                <SearchIcon className={classes.search_icon_color} />
+                                <InputBase
+                                    className={classes.search_input}
+                                    placeholder="Search albums…"
+                                    value={albumSearch}
+                                    onChange={handleAlbumSearch}
+                                    inputProps={{ 'aria-label': 'search albums' }}
+                                />
+                                {albumSearchLoading
+                                    ? <CircularProgress size={16} style={{ color: '#1DB954' }} />
+                                    : speechSupported && (
+                                        <Tooltip title={voiceTarget === 'albums' ? 'Listening… tap to stop' : 'Voice search'}>
+                                            <IconButton
+                                                size="small"
+                                                className={`${classes.mic_btn} ${voiceTarget === 'albums' ? classes.mic_btn_active : ''}`}
+                                                onClick={() => handleVoiceSearch('albums')}
+                                            >
+                                                <MicIcon style={{ fontSize: 18 }} />
+                                            </IconButton>
+                                        </Tooltip>
+                                    )
+                                }
+                            </div>
+                            <Tooltip title={albumsShuffleOrder ? 'Shuffle On — click to restore order' : 'Shuffle albums'}>
+                                <button
+                                    className={`${classes.shuffle_btn} ${albumsShuffleOrder ? classes.shuffle_btn_active : ''}`}
+                                    onClick={() => setAlbumsShuffleOrder(prev => prev ? null : [...displayAlbums].sort(() => Math.random() - 0.5))}
+                                >
+                                    <ShuffleIcon style={{ fontSize: 16 }} />
+                                    Shuffle
+                                </button>
+                            </Tooltip>
                         </div>
                     )}
 
@@ -1443,14 +1585,14 @@ const Music = () => {
                                         ? `Results for "${albumSearch}"`
                                         : `${albumCategory.label} Movie Albums`}
                                 </span>
-                                <span className={classes.song_count}>{displayAlbums.length} albums</span>
+                                <span className={classes.song_count}>{finalDisplayAlbums.length} albums</span>
                             </div>
 
                             {loadingAlbums ? (
                                 <div className={classes.loading_center}>
                                     <CircularProgress style={{ color: '#1DB954' }} />
                                 </div>
-                            ) : displayAlbums.length === 0 ? (
+                            ) : finalDisplayAlbums.length === 0 ? (
                                 <div className={classes.no_data}>
                                     <LibraryMusicIcon style={{ fontSize: 48, marginBottom: 12 }} />
                                     <span>{albumSearchResults !== null ? 'No albums found for your search' : 'No albums found'}</span>
@@ -1458,7 +1600,7 @@ const Music = () => {
                             ) : (
                                 <>
                                     <Grid container justifyContent="center" className={classes.grid_wrapper}>
-                                        {displayAlbums.map((album, i) => (
+                                        {finalDisplayAlbums.map((album, i) => (
                                             <Grid item key={`${album.id}-${i}`}>
                                                 <Tooltip title={album.name} placement="top">
                                                     <div className={classes.album_card} onClick={() => handleAlbumClick(album)}>
