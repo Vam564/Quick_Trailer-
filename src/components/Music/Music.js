@@ -387,7 +387,7 @@ const useStyles = makeStyles((theme) => ({
         background: 'linear-gradient(135deg, #1a1a2e 0%, #121212 100%)', borderTop: '1px solid #333',
         display: 'flex', alignItems: 'center', padding: '4px 20px', zIndex: 1000, gap: 0,
         touchAction: 'none',
-        [theme.breakpoints.down('sm')]: { padding: '8px 12px', gap: 8, cursor: 'pointer' },
+        [theme.breakpoints.down('sm')]: { padding: '20px 12px', gap: 8, cursor: 'pointer' },
     },
     player_left: {
         flex: 1, display: 'flex', alignItems: 'center', gap: 10, minWidth: 0,
@@ -410,12 +410,12 @@ const useStyles = makeStyles((theme) => ({
         flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4,
         [theme.breakpoints.down('sm')]: { display: 'none' },
     },
-    player_art: { width: 48, height: 48, borderRadius: 6, objectFit: 'cover', flexShrink: 0, [theme.breakpoints.down('sm')]: { width: 44, height: 44 } },
+    player_art: { width: 48, height: 48, borderRadius: 6, objectFit: 'cover', flexShrink: 0, [theme.breakpoints.down('sm')]: { width: 52, height: 52 } },
     player_art_placeholder: {
         width: 48, height: 48, borderRadius: 6, flexShrink: 0,
         background: 'linear-gradient(135deg, #1DB954 0%, #191414 100%)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        [theme.breakpoints.down('sm')]: { width: 44, height: 44 },
+        [theme.breakpoints.down('sm')]: { width: 52, height: 52 },
     },
     player_info: { minWidth: 0, flex: 1 },
     player_title: {
