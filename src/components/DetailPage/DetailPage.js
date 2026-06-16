@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useHistory } from 'react-router-dom'
-import { Grid, CardMedia, Typography, makeStyles, Fab } from '@material-ui/core';
+import { Grid, CardMedia, Typography, makeStyles, Fab, IconButton } from '@material-ui/core';
 import axios from 'axios'
 import Header from '../Header/Header'
 import { setMovieTrailerData } from '../../store/actions/DetailPageActionTypes'
 import Media from '../Media/Media'
 import PlayArrowIcon from '@material-ui/icons/PlayArrow';
+import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import GetAppIcon from '@material-ui/icons/GetApp';
 import default_img from '../../assets/default_img.png'
 
@@ -99,6 +100,16 @@ const useStyles = makeStyles((theme) => ({
         margin: '0 auto',
         padding: '0 1rem 1.5rem',
     },
+    back_btn: {
+        position: 'absolute',
+        top: 16,
+        left: 16,
+        zIndex: 2,
+        background: 'rgba(0,0,0,0.5)',
+        color: '#fff',
+        backdropFilter: 'blur(4px)',
+        '&:hover': { background: 'rgba(0,0,0,0.75)' },
+    },
 }));
 
 const DetailPage = () => {
@@ -148,6 +159,10 @@ const DetailPage = () => {
                 }}
             >
                 <div className={classes.hero_overlay} />
+
+                <IconButton className={classes.back_btn} onClick={() => history.goBack()}>
+                    <ArrowBackIcon />
+                </IconButton>
 
                 <div className={classes.hero_content}>
                     <Grid container alignItems="flex-end">
