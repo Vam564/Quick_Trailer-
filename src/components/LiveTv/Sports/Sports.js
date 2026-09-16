@@ -14,7 +14,7 @@ const CRICKET_CHANNELS = [
         id: 1,
         name: 'Star Sports 1 HD',
         description: 'Live cricket, football & more in HD quality.',
-        url: 'https://mut001.myturn1.top:8088/live/starsports01/playlist.m3u8?vidictid=205685854492&id=123144&pk=dbf564881d4a7e41eb02f5766fa3a03262932a2eba36779e5d9599bc8653f16e50d322d67e48aaa4b5f33adbd3144117469ea9a216cf0a7fde969aae5571aad7',
+        url: 'https://emb.apl605.online/player/live.php?id=266027&w=728&h=480',
         logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Star_Sports_1_HD.png/960px-Star_Sports_1_HD.png?_=20221025095646',
         gradient: 'linear-gradient(135deg, #0d1b6e 0%, #1a3a8f 100%)',
         accent: '#1565C0',
