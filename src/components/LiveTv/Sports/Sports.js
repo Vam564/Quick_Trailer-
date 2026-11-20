@@ -57,9 +57,9 @@ const CRICKET_CHANNELS = [
     },
     {
         id: 6,
-        name: 'Star Sports Telugu',
+        name: 'TNT HD Sports',
         description: 'Live sports with Telugu commentary — cricket & more.',
-        url: 'https://nagadu.nettv.fun/tata1212121212/player.php?id=980',
+        url: 'https://allrounder3-0.pages.dev/cricket/tnt',
         logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Star_Sports_1_HD.png/960px-Star_Sports_1_HD.png',
         gradient: 'linear-gradient(135deg, #e65100 0%, #ff6d00 100%)',
         accent: '#FF6D00',
