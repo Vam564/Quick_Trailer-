@@ -48,9 +48,9 @@ const CRICKET_CHANNELS = [
     },
     {
         id: 5,
-        name: 'Star Sports Hindi',
+        name: 'Willow HD',
         description: 'Live sports commentary & coverage in Hindi.',
-        url: 'https://nagadu.nettv.fun/tata1212121212/player.php?id=1033',
+        url: 'https://allrounder3-0.pages.dev/cricket/willow',
         logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Star_Sports_1_HD.png/960px-Star_Sports_1_HD.png',
         gradient: 'linear-gradient(135deg, #b71c1c 0%, #e53935 100%)',
         accent: '#E53935',
@@ -66,9 +66,9 @@ const CRICKET_CHANNELS = [
     },
     {
         id: 7,
-        name: 'Star Sports Tamil',
+        name: 'Sony Live Sports',
         description: 'Live sports with Tamil commentary — cricket & kabaddi.',
-        url: 'https://nagadu.nettv.fun/tata1212121212/player.php?id=24',
+        url: 'https://allrounder-live12.pages.dev/channel/fox1',
         logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/Star_Sports_1_HD.png/960px-Star_Sports_1_HD.png',
         gradient: 'linear-gradient(135deg, #1b5e20 0%, #388e3c 100%)',
         accent: '#388E3C',
